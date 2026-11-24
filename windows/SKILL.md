@@ -1,5 +1,5 @@
 ---
-author: "ZQY · LD-BA49BC34-894F"
+author: "ZQY-LD"
 name: windows
 description: Windows 本机写脚本、改文件、跑诊断、开关系统代理的防坑手册。要在 C:\ 下落盘改文件、拼 PowerShell 命令、写 .bat/.ps1、跑 Node 临时脚本、查进程/端口/设备/网络/浏览器故障、磁盘空间不够或 C 盘满了、验证 UI，或需要临时翻墙访问 github.com 时加载。**不用于**：Linux / macOS 命令写法、DSH 插件的装卸与调试（见 `dsh`）、网站页面自动化（见 `browser-skill`）。
 ---

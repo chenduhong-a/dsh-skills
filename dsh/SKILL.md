@@ -1,5 +1,5 @@
 ---
-author: "ZQY · LD-BA49BC34-894F"
+author: "ZQY-LD"
 name: dsh
 description: DSH 桌面版四合一手册——装升修卸、插件与工具开发、内核与现场取证、十二项自检。当用户要装/升级/卸载插件或 bundle、工具不见了、更新失败、面板提示新版、写 DSH 插件或给工具加参数、查某条会话当时说了什么、或直接说「自检」「体检」「检查环境」「升级后验收」时加载。先按第 0 节选篇再读 references。**边界**：问「有没有现成的插件、这功能能不能做」走 `official-plugins`，问「某个功能怎么实现、API 与设计规格是什么」走 `dsh-doc`；本技能管的是**动手**——装升卸、改配置、写插件、现场取证（日志 / GUI console / 会话记录）、自检。**不用于**：写技能文件（见 `skill-authoring`）、做视觉卡（见 `html-card`）、解析 PDF 与扫描件（见 `doc-parsing`）、读取 docx/pptx/xlsx（见 `doc-parsing` 的 Office 篇）、Office 文档生成（见 `univer` 系列）、商品挑选（见 `shopping-guide`）。
 ---

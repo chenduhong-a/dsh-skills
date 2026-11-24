@@ -1,5 +1,5 @@
 ---
-author: "ZQY · LD-BA49BC34-894F"
+author: "ZQY-LD"
 name: bili-transcript
 description: 读 B 站内容的总入口：口播全文（字幕优先、GPU ASR 兜底）、画面与演示（走 `bili_vision` 抽帧 + OCR）、opus 图文，以及简介与评论区。当用户给出 B站 BV 号 / 视频链接 / b23.tv 短链 / opus 链接，问「这视频讲了什么」「演示了什么」「长什么样」「值不值得装」「怎么用」，或要总结、引用原话、核对时加载；先按正文第 1 节判要口播还是要画面，再选通道。**只用于 B 站**（BV 号 / b23.tv / bilibili.com / opus）。**不用于**：YouTube、本地视频文件与「理解这段视频」这类通用请求（本机暂无专用技能；video-understand 已于 2026-11-24 卸载）、直播实时抓取、纯图片理解（走 bili-vision 或直接读图）。
 whenToUse: The user pastes a bilibili.com link (video BV/URL, b23.tv short link, or /opus/<id>) and asks what it says, what it demonstrates, what it looks like, whether it is worth installing, how to use it, or asks to summarize/analyze it, or asks to read the content plus its comments.

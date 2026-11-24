@@ -1,6 +1,6 @@
 ---
 name: doc-parsing
-author: "ZQY · LD-BA49BC34-894F"
+author: "ZQY-LD"
 description: PDF、扫描件与 docx/pptx/xlsx 取文本、公式、表格、图片的选路手册——先分诊（PDF 看有没有文字层、是不是扫描件、公式在哪一层；Office 看是读表取文、抽公式还是转 PDF），再进对应篇：PDF 篇讲通道与验真、页序与结构坑，Office 篇讲 OOXML 直读、COM 转 PDF 与私用区编码。当任务涉及「解析 PDF / 扫描件 OCR / 提取课件公式 / 读 PDF 表格 / 页码对不上 / 读 xlsx / 读 docx / Office 转 PDF / 满屏方框」时加载。**不用于**：生成或编辑 Office 文档（见 `univer` 系列）、批量整理课件成册（见 `study-intake`）、网页抓取（见 `browser-skill`）、纯图片理解（见 `bili-vision` 或直接读图）。
 ---
 

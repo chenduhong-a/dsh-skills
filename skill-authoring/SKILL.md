@@ -1,5 +1,5 @@
 ---
-author: "ZQY · LD-BA49BC34-894F"
+author: "ZQY-LD"
 name: skill-authoring
 description: "写、改、拆、验收 Agent Skill 的作者手册——加载机制与字段规格、路径合法性检查、description 触发词写法、正文五段骨架、体量与 references/evidence 分层、复合技能与脚本收纳、跨机器可移植、改完扫旧名、独立子代理验收。当用户要新建技能、写 SKILL.md、优化 description 让技能被触发、技能太长要拆分、把重复流程固化成技能、把几个技能并成复合技能、排查技能不出现或不生效时加载。不用于写插件或工具定义（见 dsh 技能的 plugin-dev 篇）。"
 ---

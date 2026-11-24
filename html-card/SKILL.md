@@ -1,5 +1,5 @@
 ---
-author: "ZQY · LD-BA49BC34-894F"
+author: "ZQY-LD"
 name: html-card
 description: 视觉卡片交付手册——三个渲染器（VCP 裸 HTML / `render_visual` / `a2ui`）加一个出口（`personalized-pages`），先判走哪条，再守根容器、脚本语法、字体对比度、单文件四道红线。画图、做卡、可视化或导出跨设备 HTML 时加载。**怎么分**：静态装帧与图走本技能的 VCP 裸 HTML；要脚本真跑起来的交互走 `render_visual`；一堆可比数据（3 行以上的表、趋势与占比、指标、进度、可拖参数、需逐步播放的过程）走 `a2ui`；要的是应用里能反复打开的页面或小工具，那不是渲染器、是出口，走 `personalized-pages`。装升修走 dsh 技能。**不用于**：一句两句能说清的普通回答（不该为它配卡）、写技能文件本身（见 `skill-authoring`）、PDF 与扫描件解析（见 `doc-parsing`）、Office 文件解析（见 `doc-parsing` 的 Office 篇）、Office 文档生成（见 `univer` 系列）。
 ---
