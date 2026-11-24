@@ -1,0 +1,4 @@
+# 历史超限文件，下次改动前先按功能拆分
+dsh/scripts/selfcheck.mjs
+study-flow/scripts/qbank.py
+study-flow/scripts/render_study_pdf.py
