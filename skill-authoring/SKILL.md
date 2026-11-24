@@ -195,3 +195,5 @@ dsh/
 
 **改造已有技能用原地替换，不另存分支**：老稿先备份到 `work\_tmp`，正文直接改原文件。「留一份分享版」会让两版长期分叉（改了一版忘了另一版），要分享时另发独立技能，而不是在同一个目录里养两个版本。
 
+**改完先提交**：`~\.agents\skills` 自 2026-11-24 起是 git 仓库（初始提交 `3cffb50`，118 文件 / 1.48 MB，`.gitattributes` 统一 LF）。改完技能先在目录里 `git add -A && git commit -m "…"`——这是「回退只准 `git restore`、不许模型重写一份看着一样的」这一条的执行基础：没有 commit 点，回退就只能靠重写，而重写正是第 3 集白屏事故的成因。两条边界：远端尚未配置（要有自己的仓库、GitHub 认证，并先修掉 `~\.gitconfig` 里那条失效的 7897 代理）；`dsh/scripts/node_modules/js-yaml` 是随技能提交的 vendored 依赖，**不要**把它当 node_modules 忽略掉，删了 `studyhub-preset-patch.mjs` 就跑不了。
+
