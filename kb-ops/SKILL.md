@@ -1,5 +1,5 @@
 ---
-author: "ZQY · LB-5E831608-0962"
+author: "ZQY-LB"
 name: kb-ops
 description: "知识库运维手册——改库、修索引、重建 FTS、章节切分与卡片管理。当要读或改 kb.sqlite 的 items/cards/docs、跑 kb.py 子命令、重建 items_fts 或 cards_fts、给已有条目补 section、修章节切分与章号排序、清理白名单外的废弃文档、排查检索召回或向量索引失效时加载。管「库里的数据怎么动」，不管「文件怎么读成文本」（见 doc-parsing）、也不管「照片怎么整理成册入库」（见 study-intake）、更不管「怎么查教材原文」（见 study-flow 的 04-kb）。"
 ---

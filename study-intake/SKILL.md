@@ -1,5 +1,5 @@
 ---
-author: "ZQY · LB-5E831608-0962"
+author: "ZQY-LB"
 name: study-intake
 description: "把一门课散落的课件整理成一份能翻能查的成品 PDF，并送进知识库（可选送 StudyHub）——手机翻拍的投影幕照片、原始 .ppt/.pptx、扫描版或矢量 PDF 三类来料各有流程。当用户说「我又放了一批课件」「这批照片帮我整理」「把课件入库」「这个 PDF 怎么进库」时使用。不用于出题、出学习总结与复习资料（见 study-flow）、只解析某一页取文本（见 doc-parsing）、编辑 Word/Excel/PPT 成品（见 univer 系列）。"
 ---

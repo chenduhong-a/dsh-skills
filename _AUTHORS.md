@@ -15,8 +15,9 @@
 | memory-collab | **ZQY** | 记忆维护与多代理协作 |
 | shopping-guide | **ZQY** | 商品挑选方法 |
 | skill-authoring | **ZQY** | 写 / 改 / 拆 / 验收技能的作者手册 |
-| study-flow | **ZQY（LB 会话）** | author = `ZQY · LB-5E831608-0962`；LB 会话写并维护，**改前先问用户** |
-| study-intake | **ZQY（LB 会话）** | author = `ZQY · LB-5E831608-0962`；LB 会话写并维护，**改前先问用户** |
+| study-flow | **ZQY（LB 会话）** | author = `ZQY-LB`；LB 会话写并维护，**改前先问用户** |
+| study-intake | **ZQY（LB 会话）** | author = `ZQY-LB`；LB 会话写并维护，**改前先问用户** |
+| kb-ops | **ZQY（LB 会话）** | author = `ZQY-LB`；LB 会话写并维护，**改前先问用户** |
 | thinking-discipline | **ZQY** | 思考纪律 |
 | windows | **ZQY** | Windows 本机脚本防坑 |
 
