@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+# 来源：dsh-video-understand 0.5.2 的 engine/livestream-highlight/asr.py（第三方插件，2026-11-24 卸载前迁出）。
+# 本文件在其基础上加了 av 解码（绕开 faster-whisper 1.2.1 + av 19 的 metadata_errors 报错）与
+# GPU 库缺失时自动回退 CPU——两处改动见 decode_audio() 与 main() 的异常分支。
 """asr.py — 视频音频转录（faster-whisper，支持 CPU/GPU）。
 
 用法:
