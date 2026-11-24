@@ -1,0 +1,19 @@
+# 系统与编辑器
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# 临时产物与测试残留
+*.log
+_tmp*
+_wbtest
+_test_*
+__pycache__/
+*.pyc
+
+# 本地缓存（技能运行时可重建）
+.cache/
+*.tmp
+
+# 注意：各技能 scripts/node_modules 是随技能提交的 vendored 依赖（如 dsh 的 js-yaml），
+# 删了补丁脚本跑不了，所以**不要**忽略 node_modules。

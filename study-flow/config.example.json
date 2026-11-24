@@ -1,0 +1,12 @@
+{
+  "study_dir": "D:\\study",
+  "progress_dir": "D:\\study\\学习进度",
+  "kb": {
+    "enabled": false,
+    "db": "",
+    "cli": ""
+  },
+  "pdf_engine": "auto",
+  "texlive_bin": "",
+  "scripts_dir": "scripts"
+}

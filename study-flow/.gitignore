@@ -1,0 +1,11 @@
+# 运行时生成，含本机路径 —— 不提交、不分享
+config.json
+
+# Python
+__pycache__/
+*.pyc
+
+# 知识库与产物（本机数据，不入技能包）
+*.sqlite
+*.sqlite-journal
+*.pdf
