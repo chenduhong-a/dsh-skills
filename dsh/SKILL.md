@@ -6,6 +6,8 @@ description: DSH 桌面版四合一手册——装升修卸、插件与工具开
 
 # DSH 桌面版手册（四合一）
 
+> **适用范围：Windows 桌面版 DSH。** 本文的路径与命令都以 `C:\deepseek\官方`、profile `~\.dsh\profiles\desktop`、`dsh.cmd` 为准。**DSHM 端是另一套**——装配、命令（`install-queue` / `cores` / `exec`）与目录结构都不同，本文在那边不成立（2026-11-24 记）。
+
 本文件是路由 + 跨篇铁律；具体判据在 `references/` 四篇，按第 0 节选。
 
 ## 0. 选篇

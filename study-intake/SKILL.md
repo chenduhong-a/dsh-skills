@@ -195,6 +195,8 @@ _kb\
 
 搬动后要跟着改的三处：①脚本里取同目录资源用 `APP = os.path.dirname(os.path.abspath(__file__))`，不要拿 `KB` 拼脚本名；②`embed.py` 的 `MODEL_DIR` 与 `index_vec.py` 的 `DB` 上跳一级（`dirname(dirname(__file__))`）；③`kb.cmd` 指向 `app\kb.py`，不要指向根。改完把 `kb.cmd status`、`kb.py find`、`kb.py page`、`index_vec.py`、`kb.py check` 各跑一遍再算完成。
 
+**缺 `models\` 时不是全瘫**：入库本身不依赖向量模型（`find` / `page` 可用），瘫的是 `kb.py ask`——先核 `items` 行数再判断这批材料有没有白入。完整依赖表见 `DEPENDENCIES.md`。
+
 ## 8. 依赖自检（每次开跑前 5 秒）
 
 DSH runtime 升级会重置 `site-packages`——**装过的 cv2、pypdf 会悄悄消失**，脚本一跑就 `ModuleNotFoundError`。

@@ -26,6 +26,8 @@ description: "知识库运维手册——改库、修索引、重建 FTS、章�
 
 `KB_ROOT` 下四样：`kb.sqlite`（主库）、`app\kb.py`（唯一 CLI 入口）、`py\Scripts\python.exe`（专用 venv，带 onnxruntime / pypdfium2 / python-pptx）、`models\`（向量模型，**运行依赖不是缓存**）。
 
+> **缺 `models\` 会怎样**：`find` 静默降级（不走向量、只剩 FTS/LIKE 片段，不报错）、`page`/`cards`/`list`/`status`/`map` 正常、`ask` 直接瘫——**别把「向量缺失」当成「库坏了」**。完整矩阵与判据见 `DEPENDENCIES.md`。
+
 跑任何命令都用 venv 的解释器：
 
 ```powershell
