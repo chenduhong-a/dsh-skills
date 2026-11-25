@@ -7,10 +7,10 @@ const biliMcp = process.env.BILI_MCP_DIR || 'C:/deepseek/tools/bili-mcp'; // 副
 const serverEntry = path.join(biliMcp, 'node_modules', 'bilibili-mcp-server', 'dist', 'index.js');
 // ASR 与下载用的 Python：2026-11-24 卸掉 dsh-video-understand 后迁到 bili-vision 插件的独立 venv
 // （faster-whisper 1.2.1 + ctranslate2 + av + yt-dlp 都在里面，510 MB，别重复建环境）。
-const venvPy = path.join(process.env.USERPROFILE, '.dsh', 'bili-vision-venv', 'Scripts', 'python.exe');
+const venvPy = process.env.BILI_VISION_PYTHON || path.join(process.env.USERPROFILE, '.dsh', 'bili-vision-venv', 'Scripts', 'python.exe');
 // 数据目录默认放当前工作区（DSH 沙箱只保证 workspace 可写，避免每次提权）；
 // 可用 BILI_READER_DATA 覆盖，落到脚本目录兜底时说明当前会话有完整权限。
-let dataRoot = process.env.BILI_READER_DATA || path.join(process.cwd(), '.bili-reader');
+let dataRoot = process.env.BILI_READER_DATA || path.join(process.cwd(), '.bili-transcript');
 let cacheDir = path.join(dataRoot, 'cache');
 let tmpDir = path.join(dataRoot, 'tmp');
 try {

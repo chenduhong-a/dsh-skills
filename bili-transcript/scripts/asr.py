@@ -135,7 +135,7 @@ def main():
         msg = str(e)
         # bili-vision-venv 里没有 NVIDIA 的 cublas/cudnn（原来那套 2 GB 的 nvidia 包在
         # dsh-video-understand 的 venv 里，2026-11-24 随插件卸载）。ctranslate2 仍会
-        # 报告 cuda 可用，于是自动选 cuda 后在这里炸——回退 CPU 即可，base 模型约 14× 实时。
+        # 报告 cuda 可用，于是自动选 cuda 后在这里炸——回退 CPU 即可，base/CPU 转写速度可用。
         if device != "cpu" and ("cublas64" in msg or "cudnn" in msg.lower()):
             print(f"[asr] GPU 库缺失（{msg}），回退 CPU", file=sys.stderr)
             device = "cpu"
