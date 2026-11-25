@@ -24,6 +24,8 @@
 
 **4.2.3 的实测（2026-11-25，本机 RTX 5070 Ti + DirectML）**：`mineru-models-download --tier basic --small-backend onnx --source modelscope` 下 13 文件 / 839.3 MB 到 `C:\Users\ZQY\.mineru`；`tier=basic` 对 49 页物理论文出 **90 个 equation 块（`content` 就是 LaTeX）+ 91 张 jpg**，没有空占位符——**「4.x 只能 flash」这条已不适用，别再照着挡升级**。省略 `tier` 时服务端按 `standard→basic→flash→advanced` 自动选；显式给不支持的档会被拒。
 
+**档位怎么选（2026-11-26 同页对比实测）**：`basic` 只用 ONNX 小模型（`MinerU-4_models_onnx`），`standard` 再加 `MinerU2.5-Pro-2605-1.2B` VLM（GGUF，531 MB 主模型 + 709 MB mmproj，`mineru-kit models download --tier standard` 下到 `C:\Users\ZQY\.mineru`，`models show` 里显示 `MinerU2.5-Pro-2605-1.2B-GGUF: 就绪`）。同一份 510 页课件逐页对比，basic 的错都很像「认得字但读不懂结构」：p1 出「按导电性能來分:导體、半导體」（简繁混）、p2 把 `(2)` 认成 `2`、p3 把「元激发」认成「元缴发」并把「在外界作用时」认成「在外界 O太时」、p36 手写板书认成 `(hRil) i=-(htk)`；standard 这几页全对，p36 是 `(hkil) i = -(h+k)`（正好是六方晶系四轴指数的标准约束）。代价约 **2.9–3 秒/页 vs 1.8 秒/页**。插件 0.3.7 起**默认 standard**，优先级 `mineru-tier.txt` > `MINERU_TIER` > `'standard'`；要退回 basic 就往 `C:\deepseek\tools\dsh-doc-parser\mineru-tier.txt` 写 `basic`（每次调用重读，不必重启宿主）。
+
 **版本判定别信 `pip index` 或更新面板，用 venv 里的 exe 跑版本 + 实跑一页看有没有 LaTeX 段落**：`& "$MINERU_VENV" -m mineru --version`，或直接 `& "C:\deepseek\tools\mineru4-venv\Scripts\mineru.exe" --version`（venv 路径见附录）。
 
 **处置**：已升到 **4.2.3**（`C:\deepseek\tools\mineru4-venv`），`dsh-doc-parser` 0.3.7 起按 4.x 的 `/v1/file_parse` 走。旧 venv `mineru3-test`（6.6 GB）与 `.cache\modelscope` 的旧模型（1180.2 MB）已不被代码引用，可删。历史对照：3.4.5 曾实测 kittel 3 页 77 秒（**含模型加载与冷启动**）、热态单页 1.2–7 秒、8 个公式块全 LaTeX——两个数字不是同一口径，别拿 77÷3 当每页成本。**2026-11-25 23:37 插件内端到端验通**：`doc_ocr` 对同一份 49 页 PDF 跑 `pages=1-2`（`force:true`），缓存 `via` 为空（此前走在线时写的是 `via=online`）、两页 8+6 块含 `Equation` 与 `Page-Number`（在线通道只给 `Text, Formula`）、LaTeX 完整。
