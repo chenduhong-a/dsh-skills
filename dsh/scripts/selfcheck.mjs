@@ -551,7 +551,9 @@ function memory() {
   try {
     const db = new DatabaseSync(MEMDB, { readOnly: true });
     const q = (sql) => db.prepare(sql).all();
-    const tables = ['soul', 'user', 'project', 'fact', 'lesson', 'topic', 'rules'];
+    // 九层，与 meow-mind 的 src/db.mjs 的 LEVELS 逐字一致。2026-11-26 前少 principle 与
+    // todo 两层——byLevel 里看不到它们、active/all 也偏小，而报告上不会显示少了什么。
+    const tables = ['soul', 'user', 'project', 'fact', 'lesson', 'principle', 'topic', 'rules', 'todo'];
     const byLevel = {};
     let active = 0, all = 0;
     for (const t of tables) {
@@ -569,7 +571,8 @@ function memory() {
           UNION ALL SELECT id,'topic',status,content FROM topic
         ) WHERE status IN ('active','memory','evolution') ORDER BY n DESC LIMIT 3`);
     } catch {}
-    // 超长条目计数：>800 字为高优先（体检应先压），>450 为一般
+    // 超长条目计数：>800 字为高优先（体检应先压），>450 为一般。
+    // 覆盖八层（soul 表无 status 列、不参与），与 tables 的九层只差 soul。
     let over = { n800: 0, n450: 0 };
     try {
       const o = q(`SELECT SUM(n>800) a, SUM(n>450) b FROM (
@@ -577,8 +580,10 @@ function memory() {
           UNION ALL SELECT length(content) FROM project WHERE status IN ('active','memory','evolution')
           UNION ALL SELECT length(content) FROM fact WHERE status IN ('active','memory','evolution')
           UNION ALL SELECT length(content) FROM lesson WHERE status IN ('active','memory','evolution')
+          UNION ALL SELECT length(content) FROM principle WHERE status IN ('active','memory','evolution')
           UNION ALL SELECT length(content) FROM topic WHERE status IN ('active','memory','evolution')
           UNION ALL SELECT length(content) FROM rules WHERE status IN ('active','memory','evolution')
+          UNION ALL SELECT length(content) FROM todo WHERE status IN ('active','memory','evolution')
         )`)[0];
       over = { n800: o.a ?? 0, n450: o.b ?? 0 };
     } catch {}
