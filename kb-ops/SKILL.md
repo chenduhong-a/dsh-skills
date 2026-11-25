@@ -8,7 +8,7 @@ description: "知识库运维手册——改库、修索引、重建 FTS、章�
 
 这个库不是黑盒：十二张业务表、一个 CLI、几条会静默出错的路径。运维的目标只有一个——**改完之后数据与索引同时正确**，而不是「命令返回 0」。
 
-下文用两个符号，真实路径见文末「路径约定」：`KB_ROOT`＝库所在目录，`KB_PY`＝能跑这个库的 Python 解释器。
+下文用两个 **PowerShell 变量**（不是占位符，可直接粘）：`$KB_ROOT`＝库所在目录，`$KB_PY`＝能跑这个库的 Python 解释器。真实路径见文末「路径约定」。
 
 ## 0. 先分清你在做哪件事
 
@@ -28,11 +28,15 @@ description: "知识库运维手册——改库、修索引、重建 FTS、章�
 
 > **缺 `models\` 会怎样**：`find` 静默降级（不走向量、只剩 FTS/LIKE 片段，不报错）、`page`/`cards`/`list`/`status`/`map` 正常、`ask` 直接瘫——**别把「向量缺失」当成「库坏了」**。完整矩阵与判据见 `DEPENDENCIES.md`。
 
-跑任何命令都用 venv 的解释器：
+跑任何命令都用 venv 的解释器。**先赋这两个变量**，后文所有命令都直接粘：
 
 ```powershell
-& <KB_PY> <KB_ROOT>\app\kb.py <子命令>
+$KB_ROOT = 'C:\deepseek\study\_kb'
+$KB_PY   = Join-Path $KB_ROOT 'py\Scripts\python.exe'
+& $KB_PY (Join-Path $KB_ROOT 'app\kb.py') status
 ```
+
+> 早先这里写的是 `& <KB_PY> <KB_ROOT>\app\kb.py`——**尖括号在 PowerShell 里是重定向符，那行根本跑不了**（2026-11-26 实测 ParserError）。
 
 **第一件事是数一遍，不要信任何写死的行数**（包括本文档）：
 
@@ -49,7 +53,7 @@ union all select 'vec', count(*) from vec;
 
 十二张业务表：`docs`（一篇文档一行）、`items`（知识条目，主体）、`items_fts`、`cards` / `cards_fts`、`concepts`、`examples`、`files`、`vec`（一 items 一行）、`pagemap`（长期近乎空，别指望）、`courses` / `review`；另 8 张 FTS 影子表（`*_fts_data` / `_idx` / `_docsize` / `_config`）。
 
-`docs.meta` **多数是空字符串**，实测 36 行里只有 3 行有值（两行 `文字层提取`、一行 `{"ocr": "mineru", "pages": 456}`）——**不存章信息**，别指望它。
+`docs.meta` **多数是空字符串**，截至 2026-11-26 的 37 行里只有 4 行有值（两行 `文字层提取`、一行 `{"ocr": "mineru", "pages": 510}`、一行高清版）——**不存章信息**，别指望它。行数会变，以 1 节的 count 查询为准。
 
 ## 2. 读：查数据
 
@@ -109,7 +113,7 @@ insert into items_fts(items_fts) values('rebuild');   -- 不做这一步，检�
 这是本技能最容易误伤的一条，先看清再动手：
 
 ```powershell
-& <KB_PY> <KB_ROOT>\app\kb.py rebuild --help
+& $KB_PY (Join-Path $KB_ROOT 'app\kb.py') rebuild --help
 # usage: kb.py rebuild [-h] [--yes]
 #   --yes   确认清库重建（会丢正文）
 ```
@@ -126,7 +130,7 @@ DELETE FROM docs
 
 两条护栏：
 
-1. 不加 `--yes` 时脚本会**自动备份**到 `<KB_ROOT>\backup\kb.sqlite.auto-<YYYYmmdd-HHMMSS>`（`kb.py:1374`）；加了 `--yes` 就没有这层保护，所以**备份要自己先做**（见 4.5）。
+1. **加不加 `--yes` 都会先自动备份**到 `$KB_ROOT\backup\kb.sqlite.auto-<YYYYmmdd-HHMMSS>`。`kb.py:1372-1382` 的实际顺序是：建 `backup` 目录 → `shutil.copy2` 复制主库 → 打印「清库前已自动备份」→ **之后才** `if not args.yes: sys.exit(1)` → `rebuild(con)`。所以 `--yes` 只跳过确认，**不跳过备份**。手动备份（见 4.5）是为了留一份库外副本/可回滚点，不是因为这层保护被跳过。
 2. **`rebuild` 不清 `vec` 与 `cards`**。跑完 `vec` 里那几千行会指向已删除的 items，变成孤儿——要么同时重建向量（`app\index_vec.py`），要么接受检索降级，并跑一次 `check --deep` 看对账结果。
 
 同类：`book` 不只是重抽正文，**还会 `retitle` 把标题打回默认值**——补 section 或改标题之后别随手跑 `book`。
@@ -135,7 +139,7 @@ DELETE FROM docs
 
 1. **词长与通道**：自己写 SQL 用 `MATCH` → 1–2 字必 0（见 2 节）；用 `kb.py find` → 会走 LIKE 兜底，拿不到相关结果就换 3 字以上的词；
 2. **索引与数据是否对得上**：比 `items` 与 `items_fts_docsize` 的行数（不是比 `items_fts`），或直接 `kb.py check --deep`；
-3. **向量链路**：`vec` 行数齐 ≠ 可用，要 `onnxruntime` 能导入、模型在 `models\` 下。注意 **`find` 不打印任何分数**（只有课程/路径/页码/正文），所以「看首条相似度」这种验收做不到；能落地的检查是 `& <KB_PY> -c "import onnxruntime; print(onnxruntime.__version__)"`，以及 `kb.py check --deep` 里 vec 那一项。内部阈值 `VEC_MIN = 0.55`（`kb.py:919`），低于它的向量命中不进结果。
+3. **向量链路**：`vec` 行数齐 ≠ 可用，要 `onnxruntime` 能导入、模型在 `models\` 下。注意 **`find` 不打印任何分数**（只有课程/路径/页码/正文），所以「看首条相似度」这种验收做不到；能落地的检查是 `& $KB_PY -c "import onnxruntime; print(onnxruntime.__version__)"`，以及 `kb.py check --deep` 里 vec 那一项。内部阈值 `VEC_MIN = 0.55`（`kb.py:919`），低于它的向量命中不进结果。
 
 另外 `_fts_query` 里有一层 `except sqlite3.OperationalError: return []`——**FTS 语法写错会静默变成 0 条**，不报错。查不到又没有报错时，先把查询语句拿去直接 `MATCH` 试一遍。
 
@@ -150,8 +154,9 @@ DELETE FROM docs
 ### 4.5 备份与验收（给可执行命令）
 
 ```powershell
-$src = '<KB_ROOT>\kb.sqlite'
-$dst = '<KB_ROOT>\backup\kb.sqlite.manual-{0:yyyyMMdd-HHmmss}' -f (Get-Date)
+$src = Join-Path $KB_ROOT 'kb.sqlite'
+$dst = Join-Path $KB_ROOT ('backup\kb.sqlite.manual-{0:yyyyMMdd-HHMMss}' -f (Get-Date))
+New-Item -ItemType Directory -Force (Split-Path $dst) | Out-Null   # 新机器上 backup\ 可能还不存在
 Copy-Item $src $dst
 Test-Path $dst          # 必须 True，再报「备份好了」
 ```
@@ -170,7 +175,7 @@ Test-Path $dst          # 必须 True，再报「备份好了」
 
 ### 5.2 章号排序：章名在 `items.section`，格式不统一
 
-`docs` 表**没有 `chapter_no` 列**。章信息只在 `items.section`，实测 260 个不同取值、四种书写混在一起：
+`docs` 表**没有 `chapter_no` 列**。章信息只在 `items.section`，截至 2026-11-26 有 262 个不同取值、四种书写混在一起：
 
 ```
 第1章 抽象群理论        ← 书里的原生章名
