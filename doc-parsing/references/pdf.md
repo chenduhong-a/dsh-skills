@@ -26,7 +26,9 @@
 
 **版本判定别信 `pip index` 或更新面板，用 venv 里的 exe 跑版本 + 实跑一页看有没有 LaTeX 段落**：`& "$MINERU_VENV" -m mineru --version`，或直接 `& "C:\deepseek\tools\mineru4-venv\Scripts\mineru.exe" --version`（venv 路径见附录）。
 
-**处置**：已升到 **4.2.3**（`C:\deepseek\tools\mineru4-venv`），`dsh-doc-parser` 0.3.7 起按 4.x 的 `/v1/file_parse` 走。旧 venv `mineru3-test`（6.6 GB）与 `.cache\modelscope` 的旧模型（1180.2 MB）已不被代码引用，可删。历史对照：3.4.5 曾实测 kittel 3 页 77 秒（**含模型加载与冷启动**）、热态单页 1.2–7 秒、8 个公式块全 LaTeX——两个数字不是同一口径，别拿 77÷3 当每页成本。
+**处置**：已升到 **4.2.3**（`C:\deepseek\tools\mineru4-venv`），`dsh-doc-parser` 0.3.7 起按 4.x 的 `/v1/file_parse` 走。旧 venv `mineru3-test`（6.6 GB）与 `.cache\modelscope` 的旧模型（1180.2 MB）已不被代码引用，可删。历史对照：3.4.5 曾实测 kittel 3 页 77 秒（**含模型加载与冷启动**）、热态单页 1.2–7 秒、8 个公式块全 LaTeX——两个数字不是同一口径，别拿 77÷3 当每页成本。**2026-11-25 23:37 插件内端到端验通**：`doc_ocr` 对同一份 49 页 PDF 跑 `pages=1-2`（`force:true`），缓存 `via` 为空（此前走在线时写的是 `via=online`）、两页 8+6 块含 `Equation` 与 `Page-Number`（在线通道只给 `Text, Formula`）、LaTeX 完整。
+
+**模式开关：`MINERU_MODE` 有个坑，插件 0.3.7 起改读文件**。`C:\deepseek\tools\dsh-doc-parser\mineru-mode.txt` 写一行 `local` 或 `online`，每次调用重读、改完下一次即生效；没有该文件才看环境变量 `MINERU_MODE`（不设则本地 venv 在就走本地、不在且有 token 才走在线）。**为什么加文件这层**：Windows 改用户级环境变量只写注册表、**不刷新已运行的 explorer**，宿主继承的是 explorer 启动那一刻的快照——2026-11-25 23:15 改成 `local`、23:19 重启宿主，进程里读到的仍是 `online`。判真跑的唯一可靠证据是页缓存 `p%03d.json` 里的 `via` 字段（在线会写 `online`，本地为空），**不是页头 `(ocr mineru)`**。
 
 ### 1.2 本地直调 HTTP API：4.x 是两个进程 + 一个 zip
 
