@@ -31,7 +31,9 @@ if (!existsSync(`${PLUGIN}\\src\\embed.mjs`)) {
 const { createEmbedder } = await import(pathToFileURL(`${PLUGIN}/src/embed.mjs`).href);
 const { buildBody } = await import(pathToFileURL(`${PLUGIN}/src/vocab.mjs`).href);
 
-const LEVELS = ['soul', 'user', 'project', 'fact', 'lesson', 'topic', 'rules', 'todo'];
+// 必须与 meow-mind 的 src/db.mjs 的 LEVELS 逐字一致（九层）。2026-11-26 才发现
+// 这里少了 principle，重建索引时该层被整层静默跳过——不报错、不提示，只是搜不到。
+const LEVELS = ['soul', 'user', 'project', 'fact', 'lesson', 'principle', 'topic', 'rules', 'todo'];
 const VEC_MODEL = 'bge-base-zh-v1.5';
 const BATCH = 8;
 const cfg = { embedding: { enabled: true, model: 'Xenova/bge-base-zh-v1.5', dtype: 'q8', localPath: '', allowRemote: false } };

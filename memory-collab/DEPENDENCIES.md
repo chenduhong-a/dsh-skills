@@ -1,23 +1,37 @@
 # 依赖清单（memory-collab）
 
+> 路径符号含义见 `SKILL.md` 附录「路径约定」；本文件只写「缺了什么会坏」。
+
 ## 必需：meow-mind 插件
 
 | 项 | 值 | 缺了会怎样 |
 |---|---|---|
-| 插件本体 | `meow-mind` 0.1.0（源码 `C:\deepseek\work\meow-mind`，profile 里 `file:` 装） | 22 个 `memory_*` 工具全部消失，本技能所有流程都跑不了 |
-| 工作区库 | `C:\deepseek\work\.dsh-mind\memory.db`（跟着会话工作区走） | 本工作区的记忆读不到 |
-| 全局库 | `C:\deepseek\.dsh-mind-global\memory.db`（`project='全局'` 落这里） | 跨工作区准则与样板读不到 |
-| 信箱 | `C:\deepseek\.dsh-mind-global\mailbox\` | `memory_mail` 收发失效 |
+| 插件本体 | `meow-mind` **0.1.2**（源码 `$WORK_DIR\meow-mind`，profile 里按 `file:` 装） | `memory_*` 工具整片 unknown，本技能所有流程都跑不了 |
+| 工作区库 | `<cwd>\.dsh-mind\memory.db`（跟着会话 cwd 走） | 本工作区的记忆读不到 |
+| 全局库 | `<globalDir>\memory.db`，本机默认 `%USERPROFILE%\.dsh-mind-global`（插件里的常量 `DEFAULT_GLOBAL_DIR` 写死为 `C:/deepseek/.dsh-mind-global`） | 跨工作区准则与样板读不到 |
+| 信箱 | `<globalDir>\mailbox\`（`inbox.md` + `archive\<YYYY-MM>.md`） | `memory_mail` 收发失效；`globalDir` 设空串时全局库与信箱一起停用 |
+| 脚本 | `scripts\rebuild-index.mjs`，跑法见下 | 批量改正文后向量索引与正文不一致，检索大面积召回不到 |
 
-判据：`memory_health` 能返回条数与 `integrity` 就说明这三个库都在；工具全 unknown 先查插件是否在 `dsh.profile.bundles` 里（装 != 启用）。
+**判据（分三样，别混）**：
 
-## 脚本
+- 库在不在 → `memory_health` 能返回条数、事件数、向量数与 `integrity`；
+- 插件启用没有 → 工具整片 unknown 先查 `dsh.profile.bundles`（**装了 ≠ 启用**），再看 profile 的 `package.json` 有没有 `meow-mind`；
+- 信箱通不通 → `memory_mail stats` 能返回未办数；它不归 `memory_health` 管。
 
-- `scripts\rebuild-index.mjs` —— 批量改正文、搬库、换 embedding 模型之后重算向量。**`memory_update` 只写正文，不重算向量**
-- 跑法：本机 PATH 里没有 node，用 `$env:ELECTRON_RUN_AS_NODE='1'` + `C:\deepseek\官方\DeepSeek Harness.exe <脚本>`
+## 脚本跑法（只此一种，别留第二套）
 
-## 协作侧
+```powershell
+$NODE_BIN = Join-Path $env:DSH_HOME 'dsh-runtimes\dsh-primary-runtime\dependencies\node\bin\node.exe'
+& $NODE_BIN (Join-Path $env:USERPROFILE '.agents\skills\memory-collab\scripts\rebuild-index.mjs')
+& $NODE_BIN <同上脚本> '<库路径>'                  # 指定库
+& $NODE_BIN <同上脚本> '<库路径>' '<meow-mind 目录>'  # 插件不在默认位置
+```
 
-- 子代理：`subagent` / `subagent_fork` / `send_message` / `list_agents`（内核自带，不是插件）
-- 任务板：`team_task_*`（内核自带）
-- 这些缺了说明内核装配有问题，不是本技能的事（去看 `dsh` 技能的 `references/internals.md`）
+用 runtime 的 node（要 `node:sqlite`），别用系统 node，也别再走 `ELECTRON_RUN_AS_NODE` + GUI 可执行文件那条老路。末行必须 `PASS`（细则见 `references\memory.md`「索引重建」）。
+
+## 协作侧（内核自带，不是插件）
+
+- 子代理：`subagent` / `subagent_fork` / `send_message` / `list_agents`
+- 任务板：`team_task_*`
+- 信箱：`memory_mail`（属 meow-mind，全局库没启用时一并失效）
+- 这些缺了说明内核装配有问题，不是本技能的事——去看 `dsh` 技能的 `references/internals.md`

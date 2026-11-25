@@ -1,18 +1,14 @@
-> 本文件是 `doc-parsing` 复合技能的一篇。分诊与选篇见上级 `SKILL.md`；PDF 与扫描件见同目录 `pdf.md`。
 # Office 文件篇
 
-> 场景：从 docx / pptx / xlsx（含旧 `.doc` / `.ppt`）里取文本、表格、图片，以及 pptx 里的公式图（xlsx 的公式是 Excel 公式串不是 LaTeX，见 1.4）。与 PDF 不同，Office 是 zip + XML，坑集中在**结构与编码**，不在通道选择。PDF 与扫描件见同技能的 `references/pdf.md`。
+> 本文件是 `doc-parsing` 复合技能的一篇。分诊与选篇见上级 `SKILL.md`；PDF 与扫描件见同目录 `pdf.md`。
+> **数据截止 2026-11-26**。带日期的实测数字见 `evidence/mineru-measurements.md` 第四节。
+>
+> 场景：从 docx / pptx / xlsx（含旧 `.doc` / `.ppt`）里取文本、表格、图片，以及 pptx 里的公式图（xlsx 的公式是 Excel 公式串不是 LaTeX，见 1.4）。与 PDF 不同，Office 是 zip + XML，坑集中在**结构与编码**，不在通道选择。
+> **本文件只管读**：生成或编辑 Office 一律走 `univer` 系列（`univer-sheet` / `univer-doc` / `univer-slide`）。
 
-## 判据：先给文件分诊
+## 开局
 
-| 类别 | 硬判据 | 首选 |
-|---|---|---|
-| 现代 Office | 能解包出 `word/document.xml` / `xl/workbook.xml` / `ppt/presentation.xml` | OOXML 直读 |
-| 旧 `.doc` / `.ppt` | 解包失败，或文件头是 `d0cf11e0`（OLE 复合文档） | Word/PowerPoint COM 打开，或转 PDF 再抽文字层 |
-| 公式密集 | `<m:oMath>` 为 0，但 `ppt/media` 一堆 `.wmf`/`.emf`、`ppt/embeddings/oleObject*.bin` | §3 公式三法（若 `oMath > 0`，公式在文本层，直接读 `m:t`，不用走 §3） |
-| 满屏 `□` | 码位落在 `0xE000–0xF8FF`（私用区） | §5 按字体编码建表替换 |
-
-先跑 `doc_info`（页/段/表统计）；pptx 再加 `doc_formulas action=scan`（只数 OLE 公式对象与 WMF/EMF，不渲染）。
+分诊见 `SKILL.md`「判据：先给文件分诊」（本节不再另立一张表，避免两处漂移）。先跑 `doc_info`（页/段/表统计）；pptx 再加 `doc_formulas action=scan`（只数 OLE 公式对象与 WMF/EMF，不渲染）。
 
 ## 1. 读 xlsx
 
@@ -58,6 +54,8 @@
 ### 2.1 段落丢换行
 
 **处置**：解包读 `word/document.xml`，`</w:p>` 转换行、`<w:tab/>` 转空格。
+
+**公式范围**：docx 的公式若在文本层（`<m:oMath>` > 0），直接读 `<m:t>` 即可，**不走 §3 的 OLE 路径**（`doc_formulas` 只接受 `.pptx`）。也就是说本技能的公式提取只管 PPT；docx 里公式密集又不在文本层的，按 §4 转 PDF 再 OCR。
 
 ### 2.2 旧 `.doc`（Word 97-2003）
 
@@ -125,7 +123,7 @@ WPS 用户换 ProgID：PowerPoint → `KWPP.Application`，Word → `Kwps.Applic
 
 1. **行列与源一致**：列数对不上通常是合并单元格；拿到表先看有没有「等差怪值」（§1.1 的错位信号）。
 2. **值的来源分清**：要显示值还是公式本身（`<v>` vs `<f>`），报告里说明按哪个口径取的。
-3. **公式数量对得上**：`extract` 出的公式块数 ÷ 页数落在 0.5–5 之间属正常；为 0 说明只走了文本层，>20 说明把正文块也当公式抓了。
+3. **公式数量对得上**：`extract` 出的公式块数 ÷ 页数落在 0.5–5 之间属正常（样本：「高量1」67 个 / 32 页 ≈ 2.1，2026-11-26 实测，见 `evidence/mineru-measurements.md` 第四节；别的课件类型可能不同，别把它当阈值判据）；为 0 说明只走了文本层，>20 说明把正文块也当公式抓了。
 4. **抽 2–3 段原文逐字比对**：错字允许，改内容、漏段、串行不可接受。
 5. **`□` 要说是编码问题还是真缺字**：查码位（§5），别把私用区当字体缺失交付。
 6. **导出的 PDF 对得上**：页数 = slide 数（或段落页数）、中文字体已嵌入（否则手机上显示方框）、体积适合手机翻看。
@@ -137,25 +135,5 @@ WPS 用户换 ProgID：PowerPoint → `KWPP.Application`，Word → `Kwps.Applic
 - **`Quit()` 报 RPC failed** → 文件已存好，不要重跑（§4）。
 - **公式只出编号** → 是 formula 开关或通道没对（文本层），换 §3.3 的路，不要在文本层反复调参。
 
-## 6. 生成 xlsx 的三结构点（写，不是读）
+> 路径符号（`DSH_HOME` / `SKILLS_DIR` / `MINERU_VENV` 等）统一见 `SKILL.md` 附录；正文里出现的绝对路径只是作者机器实例，换机器按符号替换，判据与路径无关。
 
-> 这一节是「自己造 xlsx」的坑，与读表无关；读表看 §1。
-
-**症状**：连续两版改 `<col>`，WPS/Excel 里毫无变化。
-
-**判据**：`<col>` 没包在外层 `<cols>…</cols>` 里，WPS/Excel 会整段丢弃。
-
-**处置**：三个必守结构点——① 列宽、隐藏、分组用的 `<col>` 必须包在 `<cols>…</cols>` 里；② 「默认收起、点开查看」＝ `<sheetPr><outlinePr/></sheetPr>` + `<col outlineLevel="1" hidden="1"/>`，Excel 在列标上方显示可点的「+」分组条；③ 冻结窗格＝ sheetView 内 `<pane xSplit ySplit state="frozen"/>`，`xSplit` 同时冻结左侧列。生成后解包自检：`<cols>` 是否存在、`hidden` 计数是否等于预期。（上下文：`zlib.deflateRawSync` + 自实现 CRC32 + 手写 ZIP，单元格用 inlineStr 免 sharedStrings，styles.xml 定义多套 cellXfs。）
-
-## 附录：路径约定（跨机器可用）
-
-本技能里的 `C:\deepseek\...` 与 `C:\Users\ZQY\...` 是作者机器上的实例路径；判据与路径无关，换台机器按下表替换：
-
-| 符号 | 含义 | 作者机器实例 | 通用写法 |
-|---|---|---|---|
-| `DSH_HOME` | DSH 数据根 | `C:\Users\ZQY\.dsh` | `%USERPROFILE%\.dsh`（或环境变量 `DSH_HOME`） |
-| `SKILLS_DIR` | 用户技能目录 | `C:\Users\ZQY\.agents\skills` | `%USERPROFILE%\.agents\skills` |
-| `TOOLS_DIR` | 自建工具目录 | `C:\deepseek\tools` | 任选，固定后写回本表 |
-| `STUDY_DIR` | 学习资料 | `C:\deepseek\study` | 任选 |
-
-换机器两步：①确认 `DSH_HOME`、`SKILLS_DIR`；②本节所有判据（正则、格式码、报错串、码位区间）与具体路径无关，只把命令里的绝对路径换掉即可。本技能附带一个脚本 `scripts/mineru-online-probe.mjs`（在线通道探针）；它只在 PDF 篇用得上，Office 篇不需要改它。
