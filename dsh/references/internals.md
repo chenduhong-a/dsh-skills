@@ -61,7 +61,7 @@ fs.writeFileSync(outFile, Buffer.concat(parts));
 
 **3.4 改日志三条红线**。**判据**：内核 `SessionLogScanner` 按行严格校验 `event.seq === eventCount`（从 0 递增），典型错误 `released v2 row N has seq gap (expected X, got Y)`、`corrupt session log: invalid committed event at line N`。**红线**：①**不能整份重写成单个帧**——会话会从列表消失；②**不能重新分帧**（如每 200 行一帧）——即使 seq 连续 DSH 仍不认；③**不能 append 事件搬历史**（见 3.5）。**唯一正确修法**：恢复 **DSH 自己写出的原始多帧备份**，逐帧解压，只把自己插入的坏帧整帧丢弃，其余帧原样拼接写出；改前备份到 `work\handover\backups\`；运行中的会话不重读日志，改完要重启应用生效（帧数实测见 `evidence/internals.md` 第 3 节）。
 
-**3.5 迁历史：写记忆库，不改日志**。**判据**：新会话自动继承的只有三样——记忆库（按工作区存 `<cwd>\.dsh-mind\memory.db`，同 cwd 就同一份）、磁盘上的文件 / 脚本 / 产物、profile / 全局级的插件、技能、配置；**对话历史不继承**（`sessions\<uuid>\` 按会话隔离，CLI 没有导出命令，只有 `--resume`）。**处置**：①不要改日志搬历史——append、整份重写、重新分帧三种改法都失败（seq 冲突或会话从列表消失）；②结论写进记忆库 + 写一页交接文件（如 `_relay\handover-<日期>.md`），新会话第一句让它读。
+**3.5 迁历史：写记忆库，不改日志**。**判据**：新会话自动继承的只有三样——记忆库（按工作区存 `<cwd>\.dsh-mind\memory.db`，同 cwd 就同一份）、磁盘上的文件 / 脚本 / 产物、profile / 全局级的插件、技能、配置；**对话历史不继承**（`sessions\<uuid>\` 按会话隔离，CLI 没有导出命令，只有 `--resume`）。**处置**：①不要改日志搬历史——append、整份重写、重新分帧三种改法都失败（seq 冲突或会话从列表消失）；②结论写进记忆库 + 写一页交接文件（`C:\deepseek\上下文归档\<session-id>-<角色>-<识别码>.md`），新会话第一句让它读。
 
 ## 4. GUI 现场：console 与 BrowserSkill
 
