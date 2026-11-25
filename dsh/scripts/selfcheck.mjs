@@ -150,9 +150,14 @@ function profileDeps() {
   if (!pkg) return { error: 'package.json 读不到' };
   const deps = Object.entries(pkg.dependencies || {}).map(([n, v]) => ({ name: n, spec: v }));
   const bundles = pkg.dsh?.profile?.bundles || [];
-  const bundleSet = new Set(bundles);
+  // 只有带 dsh 字段的包才是插件；纯库（如 @huggingface/transformers）不进 bundles 属正常，
+  // 否则每次自检都会把它报成「掉出」。装不上（读不到包）时保守按插件算，让它报出来。
+  const isPlugin = (name) => {
+    const j = readJson(path.join(PROFILE, 'node_modules', name, 'package.json'));
+    return j ? !!j.dsh : true;
+  };
   // bundles 里可能是包名，也可能是「包名/子路径」；用前缀匹配
-  const missing = deps.filter(d => !bundles.some(b => b === d.name || b.startsWith(d.name + '/'))).map(d => d.name);
+  const missing = deps.filter(d => isPlugin(d.name) && !bundles.some(b => b === d.name || b.startsWith(d.name + '/'))).map(d => d.name);
   // 内核自带的 bundle（@deepseek-ai/*）不在 dependencies 里属正常，不算「多余」
   const extra = bundles.filter(b => !b.startsWith('@deepseek-ai/') && !deps.some(d => b === d.name || b.startsWith(d.name + '/')));
   return { count: deps.length, bundles: bundles.length, missingInBundles: missing, extraInBundles: extra };
