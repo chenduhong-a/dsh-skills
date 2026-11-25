@@ -6,7 +6,7 @@ description: "从头系统学任何一门课的完整流程（不绑定具体课
 
 # Study Flow · 从头学一门课
 
-> 版本号见 `CHANGELOG.md` 顶部（当前 2.7.32）。frontmatter 里不写 `version`——技能加载器不读它。
+> 版本号见 `CHANGELOG.md` 顶部（当前 2.7.33）。frontmatter 里不写 `version`——技能加载器不读它。
 
 复合技能的入口。**这里只放「走哪条、守什么」**；步骤在 `references/`，工具在 `scripts/`，模板在 `assets/`。
 
