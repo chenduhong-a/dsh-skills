@@ -110,7 +110,7 @@ prefetch: doc_ocr {path, prefetch:true}          # 整本排队，立即返回
 # 然后逐份 study_workspace document.import（course 同名），再用 source.list 核对 total
 ```
 
-- 为什么走 md 而不是原图 PDF：StudyHub 有两条上限——**PDF ≤ 200 页、文件 ≤ 8 MB**。648 MB 的扫描件两条都过不去，OCR 后的正文才进得去（原图仍留在 `_kb`，用 `kb.py page` 取）。
+- 为什么走 md 而不是原图 PDF：StudyHub 有**三档上限**——**PDF ≤ 200 页**、**pdf/md/tex/html/txt ≤ 8 MB**、**docx/pptx/ppt/JSON ≤ 40 MB**，另加**单次导入抽取文本 ≤ 60 万字符**。648 MB 的扫描件前两条都过不去，OCR 后的正文才进得去（原图仍留在 `_kb`，用 `kb.py page` 取）。
 - md 导入每份只生成 **1 个 source**（PDF 是每页一个 source），所以 `sources` 计数只 +份数。
 
 

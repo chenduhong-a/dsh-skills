@@ -23,4 +23,4 @@
 
 ## 已知上限
 
-StudyHub 两条硬上限：**PDF ≤ 200 页、文件 ≤ 8 MB**——扫描件过大所以走「OCR 后只送正文 md、原图留在 `_kb`」这条路。
+StudyHub 的三档硬上限（`library.context {area:"imports"}` 契约原文）：**pdf/md/tex/html/txt ≤ 8 MB**、**docx/pptx/ppt/JSON ≤ 40 MB**、**PDF ≤ 200 页**（超了无论 `pages` 怎么写都拒）、**单次导入抽取文本 ≤ 60 万字符**——扫描件过大所以走「OCR 后只送正文 md、原图留在 `_kb`」这条路。

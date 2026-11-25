@@ -101,9 +101,9 @@ pdf 解析 / OCR   !!  脚本端不可用：会话里调 doc_info 一次
 | 看这门课建好没有 | 打开 `学习进度\<课程名>\进度.md`；题库三件用 `scripts\qbank.py list --course X` |
 | 存课程与学法 | 写 `进度.md` 的文件头与「## 路线」节（`01-start.md` 第三节） |
 | 找题 / 加题 | `scripts\qbank.py pick --course X --n 5` · `scripts\qbank.py add --course X --prompt … --answer … --source …` |
-| 写回作答 | `scripts\qbank.py grade --course X --qid q-0001 --grade good`（答错带 `--step 2`） |
+| 写回作答 | `scripts\qbank.py grade --course X --qid q-0001 --grade good --confidence sure`（答错带 `--step 2`；`--confidence` 漏了返工判据就失效） |
 | 复习 / 看答案 | `scripts\qbank.py due --course X` · `scripts\qbank.py pick --course X` · `scripts\qbank.py errors --course X`（错题本，默认落 `<课程>\错题本.md`） |
-| 看资料原文 | `<KB_CLI> find "词"` · `<KB_CLI> page "<书名>" <页码>` · `doc_text`（`<KB_CLI>` 是使用者自配的查询 CLI，**必须写全路径**，没配就按 `04-kb.md` 第七节用 SQL 查） |
+| 看资料原文 | `<KB_CLI> find "词"` · `<KB_CLI> page "<书名>" <PDF 页序>`（**不是书页码**，见 `05-materials.md`） · `doc_text`（`<KB_CLI>` 是使用者自配的查询 CLI，**必须写全路径**，没配就按 `04-kb.md` 第七节用 SQL 查） |
 | 题库与排期 | `scripts\qbank.py init` / `exam` / `add` / `list` / `pick` / `grade` / `audit` / `due` / `stats` / `export` / `errors` / `backup` / `restore` |
 | 设考试日（到期不越过它） | `scripts\qbank.py exam --course X --date 2026-12-26` |
 | 这几种作答不算数 | `scripts\qbank.py grade ... --retry` / `--self-reported` / `--implicit` / `--simulated` |
