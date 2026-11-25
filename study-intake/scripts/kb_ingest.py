@@ -40,6 +40,7 @@ if hasattr(sys.stdout, "reconfigure"):
 KB_DB = os.environ.get("STUDY_KB_DB", r"C:\deepseek\study\_kb\kb.sqlite")
 CACHE_ROOT = os.path.join(os.environ.get("DSH_HOME", r"C:\Users\ZQY\.dsh"), "storages", "pdf-reader")
 LIMIT_BYTES = 190 * 1024 * 1024          # doc_ocr 实际阈值 200 MB，留余量
+OCR_MAX_PAGES = 200                      # MinerU 在线硬限；与 LIMIT_BYTES 是两个独立判据，2026-11-25 踩过
 CHUNK_PAGES = 100                        # 照片类约 1.6 MB/页，100 页 ≈ 160 MB
 
 
@@ -128,18 +129,27 @@ def text_via_pdfium(path: str) -> list[str]:
     return out
 
 
-def text_via_cache(parts: list[str]) -> list[str] | None:
+def text_via_cache(parts: list[str]) -> tuple[list[str], list[int]] | None:
+    """返回 (按片拼好的正文, 缺页的原页号)。缺页要显式报出来——2026-11-25 实测：
+    静默跳过会让 507 条正文配 510 条标题，从第一个缺页起整段错位。"""
     pages: list[str] = []
+    missing: list[int] = []
     for part in parts:
         ocr = os.path.join(cache_dir(part), "ocr")
         if not os.path.isdir(ocr):
             print(f"!! 没有缓存：{os.path.basename(part)}（要先对这份跑 doc_ocr）")
             return None
-        files = sorted(f for f in os.listdir(ocr) if re.fullmatch(r"p\d{3}\.json", f))
-        for f in files:
-            data = json.load(io.open(os.path.join(ocr, f), encoding="utf-8"))
+        total = pdf_pages(part)
+        for i in range(1, total + 1):
+            f = f"p{i:03d}.json"
+            fp = os.path.join(ocr, f)
+            if not os.path.isfile(fp):
+                missing.append(len(pages) + 1)
+                pages.append("")          # 占位，保持与页序一一对应
+                continue
+            data = json.load(io.open(fp, encoding="utf-8"))
             pages.append(data.get("text") or data.get("markdown") or "")
-    return pages
+    return pages, missing
 
 
 def load_titles(path: str | None) -> list[dict]:
@@ -163,14 +173,17 @@ def rebuild_fts(con: sqlite3.Connection) -> None:
 
 def cmd_split(args) -> int:
     size = os.path.getsize(args.pdf)
-    print(f"{os.path.basename(args.pdf)}  {size / 1024 / 1024:.1f} MB  {pdf_pages(args.pdf)} 页")
+    pages = pdf_pages(args.pdf)
+    print(f"{os.path.basename(args.pdf)}  {size / 1024 / 1024:.1f} MB  {pages} 页")
     if has_text_layer(args.pdf):
         print("有文字层 → 不需要 OCR，直接 ingest 即可")
         return 0
-    if size <= LIMIT_BYTES:
-        print(f"无文字层，但 {size / 1024 / 1024:.1f} MB ≤ 190 MB → 整份跑 doc_ocr：")
+    if size <= LIMIT_BYTES and pages <= OCR_MAX_PAGES:
+        print(f"无文字层，但 {size / 1024 / 1024:.1f} MB ≤ 190 MB 且 {pages} 页 ≤ {OCR_MAX_PAGES} 页 → 整份跑 doc_ocr：")
         print(f"  doc_ocr path={args.pdf}")
         return 0
+    if pages > OCR_MAX_PAGES:
+        print(f"页数 {pages} > MinerU 在线上限 {OCR_MAX_PAGES} 页 → 必须切片（体积够小也一样）")
     parts = split_pdf(args.pdf, args.out)
     print(f"已切 {len(parts)} 份 → {args.out}")
     todo = []
@@ -212,10 +225,13 @@ def cmd_ingest(args) -> int:
             return 0
         parts = split_pdf(args.pdf, args.parts_dir)
         print(f"路径：OCR 缓存（{len(parts)} 份切分件）")
-        pages = text_via_cache(parts)
-        if pages is None:
+        got = text_via_cache(parts)
+        if got is None:
             print("!! 缓存不全，先对上面列出的切分件跑 doc_ocr，再回来 ingest")
             return 1
+        pages, missing = got
+        if missing:
+            print(f"!! {len(missing)} 页没有 OCR 结果，正文留空但保留页序：{missing}")
 
     titles = load_titles(args.titles)
     print(f"页数 {len(pages)}，标题源 {len(titles)} 条")

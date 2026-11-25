@@ -6,7 +6,7 @@ description: "把一门课散落的课件整理成一份能翻能查的成品 PD
 
 # 课件入库（study-intake）
 
-> 版本号见 `CHANGELOG.md` 顶部（当前 1.2.0）。frontmatter 里不写 `version`——技能加载器不读它。
+> 版本号见 `CHANGELOG.md` 顶部（当前 1.2.1）。frontmatter 里不写 `version`——技能加载器不读它。
 
 把「一堆原始文件」变成「一份带书签的成品 PDF + 可检索的正文」，中间每一步都能被目视或哈希验证。
 **出题、出学习类 PDF 不归这里**——那是 `study-flow` 的事，本技能到「入库」为止。
@@ -133,6 +133,10 @@ doc_info 探底（页数 / 文字层 / scannedPages / 体积）
                 → 没有才 OCR：先 doc_ocr 试 3–5 页，再整本 prefetch
 ```
 OCR 前先看缓存命中（`cacheAction: "stats"`）；跑整本用 `prefetch`，进度落 `ocr\progress.json`，不要轮询单页。
+
+**两个上限都要看**：单份 ≤ 190 MB（`doc_ocr` 的字节闸）**且** ≤ 200 页（MinerU 在线硬限，超了报 `number of pages exceeds limit (200 pages)`）。**体积达标不代表能跑**——510 页 116 MB 的轻量版就是被页数拦下的。超了就 `split` 体检，它按 `CHUNK_PAGES = 100` 切成 `part_{start+1}-{end}.pdf`；**必须按它的规则切**，自己另造 200 页的片哈希不同、OCR 缓存不命中，白跑一轮。
+
+OCR 会有页失败（手写黑板最常见，返回 `page missing in online result`）。`ingest` 会把这些页打成「正文留空但保留页序」的条目，标题照常对齐——看到这条提示不用修，只需要知道那几页查不到正文。
 
 **页标题是入库质量的一半**：扫描教材的页标题清洗有四个坑（目录白名单、页首双条件、章号只增不减、跳过前 20 页），做法见 `references\pdf.md` 末节「页标题清洗」。
 
