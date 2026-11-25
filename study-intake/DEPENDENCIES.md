@@ -3,7 +3,8 @@
 ## 技能自带脚本
 
 - `scripts\kb_ingest.py` —— 三步：`split` 体检 → `doc_ocr` → `ingest`
-- `scripts\kb.py` / `scripts\kb_to_md.py` —— 直接读写 `_kb\kb.sqlite`，**不依赖已卸的 `@local/dsh-knowledge-base`**（那插件 2026-11-16 已卸，它的 `kb_*` 工具全部不可用）
+- `scripts\kb_to_md.py` —— 把 `_kb` 里的条目转成 md（送 StudyHub 用），**不依赖已卸的 `@local/dsh-knowledge-base`**（那插件 2026-11-16 已卸，它的 `kb_*` 工具全部不可用）
+- **查询命令不在本技能里**：用下面的「查询入口」`_kb\kb.cmd`（2026-11-26 前的版本在这里误列过一个不存在的查询脚本，已删）
 
 ## 外部依赖
 

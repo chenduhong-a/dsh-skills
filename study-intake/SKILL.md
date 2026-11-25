@@ -6,7 +6,7 @@ description: "把一门课散落的课件整理成一份能翻能查的成品 PD
 
 # 课件入库（study-intake）
 
-> 版本号见 `CHANGELOG.md` 顶部（当前 1.2.1）。frontmatter 里不写 `version`——技能加载器不读它。
+> 版本号见 `CHANGELOG.md` 顶部（当前 1.2.2）。frontmatter 里不写 `version`——技能加载器不读它。
 
 把「一堆原始文件」变成「一份带书签的成品 PDF + 可检索的正文」，中间每一步都能被目视或哈希验证。
 **出题、出学习类 PDF 不归这里**——那是 `study-flow` 的事，本技能到「入库」为止。
@@ -142,11 +142,11 @@ OCR 会有页失败（手写黑板最常见，返回 `page missing in online res
 
 ## 4. 入库
 
-> **知识库插件 `@local/dsh-knowledge-base` 已于 2026-11-16 卸载**：该插件提供的 `kb_*` 工具全部不可用（已卸），文中引用一律按「已卸」读。下面走的是技能自带的 `scripts\kb_ingest.py` / `kb.py` / `kb_to_md.py`——直接读写 `_kb\kb.sqlite`，不依赖插件。
+> **知识库插件 `@local/dsh-knowledge-base` 已于 2026-11-16 卸载**：该插件提供的 `kb_*` 工具全部不可用（已卸），文中引用一律按「已卸」读。下面走的是技能自带的 `scripts\kb_ingest.py`（入库）与 `scripts\kb_to_md.py`（转 md），直接读写 `_kb\kb.sqlite`，不依赖插件。**查询命令不在这里**——用 `_kb\kb.cmd`（即 `_kb\app\kb.py`，见 `DEPENDENCIES.md`）。
 
 | 目标 | 手段 | 判据 |
 |---|---|---|
-| 知识库 `_kb` | `scripts\kb_ingest.py`，三步：`split` 体检 → `doc_ocr` → `ingest` | `kb.py find <词> --course <课>` 能命中，`kb.py page <doc> <seq>` 能取原页 |
+| 知识库 `_kb` | `scripts\kb_ingest.py`，三步：`split` 体检 → `doc_ocr` → `ingest` | `kb.cmd find <词> --course <课>` 能命中，`kb.cmd page <doc> <seq>` 能取原页 |
 | StudyHub 材料（可选） | `scripts\kb_to_md.py` 生成 md → `document.import`（PDF ≤ 200 页、文件 ≤ 8 MB） | `source.list {course, groupBy:"document"}` 的 total 等于生成份数 |
 | StudyHub 题目（可选） | 已有题用 `document.import` / `deck.import` | decks/cards 计数变化 |
 

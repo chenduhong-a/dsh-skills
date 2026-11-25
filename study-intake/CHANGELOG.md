@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## 1.2.2 — 2026-11-26 · 独立诊断报告指出的三处悬空引用
+
+三份技能诊断报告（`C:\deepseek\调研\技能梳理\`）里有三条经我逐条复核为真，全在「照文档做就失败」这一档：
+
+- **声称有 `scripts\kb.py`，实际没有**：`SKILL.md` §4 的引言把 `scripts\kb_ingest.py` / `kb.py` / `kb_to_md.py` 并列成「技能自带」，`DEPENDENCIES.md:6` 又写了一遍；`Test-Path` 实测 False，`scripts\` 下只有 10 个 `.py`。而同一份 `DEPENDENCIES.md:13` 自己又说查询入口是 `_kb\kb.cmd`——两个位置互相打脸。已改为「入库用 `kb_ingest.py`、转 md 用 `kb_to_md.py`，**查询不在本技能里**，用 `_kb\kb.cmd`」。
+- **§4 判据列的 `kb.py find` 跟着改**：`kb.py find <词> --course <课>` → `kb.cmd find ...`，`kb.py page` → `kb.cmd page`。同节末尾本来就写着「不装 StudyHub 时用 `kb.cmd find`」，两处口径现在一致。
+- **§5 末句「主版常超 200 MB」与判据对不上**（诊断报告未提，我顺手核的）：`doc_render` / `doc_info` 的硬闸是 `209715200` B，而主版实测 853.7 MB——「常超」没错，但少了「超了会报什么」，补了报错原文 `file too large (>209715200)`。
+
+未采纳：报告建议把 `SKILL.md` 从 262 行压到 ≤250 行、把 §7 `_kb` 分层与 §8 依赖自检移出、`CHANGELOG` 搬进 `evidence/`。这三条是结构重排，涉及与其他技能的边界重新划分，先挂账。
+
 ## 1.2.1 — 2026-11-25 · 固体 510 页入库踩出的两个坑
 
 真实任务：固体理论课件整理从 456 页增到 510 页，要重灌知识库。这份 PDF 是照片拼的、没有文字层，只能走 OCR，于是把两个一直没被触发过的缺陷全踩了出来。
