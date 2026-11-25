@@ -1,11 +1,8 @@
----
-name: proxy-toggle
-description: 临时开关 Windows 系统代理，用于访问被墙的源（github.com / raw.githubusercontent.com / ghproxy 等）。需要翻墙时调用，用完恢复原状。无需管理员权限，改的是 HKCU 用户级注册表。
----
-
 # 代理开关
 
-本机代理：Clash 系，系统代理 `127.0.0.1:7897`（HKCU 注册表，用户级，**不需要管理员**）。
+本机代理：Clash 系，系统代理 `127.0.0.1:7897`（HKCU 注册表，用户级，**不需要管理员**）。只用于临时访问被墙的源（github.com / raw.githubusercontent.com），用完恢复原状。
+
+**只读沙箱先看这一条**：`ConstrainedLanguage` 下 `Add-Type` 不可用（判法见 `local.md` 的「判据」），开系统代理这条路走不通——改用「关键坑」第 7 条的 `-Proxy` 逐条指定，不动注册表。
 
 ## 三步
 
@@ -22,38 +19,43 @@ Add-Type -TypeDefinition 'using System;using System.Runtime.InteropServices;publ
 $env:HTTP_PROXY='http://127.0.0.1:7897'; $env:HTTPS_PROXY='http://127.0.0.1:7897'
 ```
 
-### 2. 验证
+### 2. 验证（失败立刻走第 3 步）
 
 ```powershell
 try { (Invoke-WebRequest 'https://github.com' -UseBasicParsing -TimeoutSec 12).StatusCode } catch { "FAIL: $($_.Exception.Message)" }
 ```
 
-### 3. 恢复原值
+返回 `FAIL:` 就**马上恢复原值再报错**，不要留在「代理开着但连不上」的状态——那是把用户网络弄坏又不修。
+
+### 3. 恢复原值 + 清环境变量
 
 ```powershell
 Set-ItemProperty $k -Name ProxyEnable -Value $orig.ProxyEnable
 if ($orig.ProxyServer) { Set-ItemProperty $k -Name ProxyServer -Value $orig.ProxyServer }
+else { Remove-ItemProperty $k -Name ProxyServer -ErrorAction SilentlyContinue }
 [WinINetP]::InternetSetOption([IntPtr]::Zero, 39, [IntPtr]::Zero, 0) | Out-Null
+$env:HTTP_PROXY=$null; $env:HTTPS_PROXY=$null
 ```
 
-**必须恢复成读到的原值，不是无脑设 0**——用户本来就是开着的话，设 0 等于把人家网络断了。
+**必须恢复成读到的原值，不是无脑设 0**——用户本来就是开着的话，设 0 等于把人家网络断了；原值为空时要把 `ProxyServer` 删掉，不然改过的值留在注册表里。
+
+要保证失败也恢复，用一条命令包住（`try` 里开+验证，`finally` 里恢复）；分三次调用时，第三次调用是新进程，`$orig` 已丢，必须重新读原值——所以**优先用一条命令版**，或先把原值写进临时文件。
 
 ## 关键坑
 
-1. **`$env:HTTP_PROXY` 只在当前 pwsh 进程有效**。每次调 pwsh 都是新进程，所以**每条命令里都要重设**，不能上一条设了下一条用。
+1. **`$env:HTTP_PROXY` 只在当前 pwsh 进程有效**。每次调 pwsh 都是新进程，所以**每条命令里都要重设**，不能上一条设了下一条用；恢复时也要显式清掉（`$env:HTTP_PROXY=$null`）。
 2. **node 的 `fetch` 不读系统代理**（2026-11-02 实测：系统代理开着，node fetch 仍报 `fetch failed`）。`$env:HTTP_PROXY` 对 node 18+ 的 undici fetch 也**不自动生效**。要抓 github 这类被墙地址，**用 PowerShell 的 `Invoke-WebRequest`**（它走系统代理）；要抓 npm registry 这类直连正常的，**用 node fetch 即可**。
 3. **`Invoke-WebRequest` 在非交互 PowerShell 里必须加 `-UseBasicParsing`**，否则报「Windows PowerShell 处于非交互模式」。
 4. **代理软件没跑时改注册表没用**——先 `Test-NetConnection 127.0.0.1 -Port 7897 -InformationLevel Quiet`，返回 False 就说明 Clash 没开，改注册表也连不上。
 5. **广播 `InternetSetOption` 不能省**——不广播的话注册表改了但已运行的程序（含 PowerShell 自己）还用旧设置。
-
 6. **Clash 刚启动时 GitHub API 会报 SSL 未就绪**：`unexpected EOF` / `SSL could not be established` 是预热没走完，不是配置错。启动后**等 10 秒**，失败**最多重试 4 次、间隔 4 秒**，再判失败。
-7. **只想查一次就用显式 `-Proxy`，不动注册表**：`Invoke-WebRequest -Proxy http://127.0.0.1:7897 ...` 只让这一条命令走代理，不改 HKCU、不广播、不用恢复原值。查 GitHub 源、抓一两个文件优先走这条。
+7. **只想查一次就用显式 `-Proxy`，不动注册表**：`Invoke-WebRequest -Proxy http://127.0.0.1:7897 ...` 只让这一条命令走代理，不改 HKCU、不广播、不用恢复原值。查 GitHub 源、抓一两个文件优先走这条；只读沙箱下这是唯一可用路径。
 8. **node 进程的请求不读 WinINet，要 IWR**：`https.get` 与 `fetch` 同属 node 出站（实测证据是 `fetch` 报 `fetch failed`，`HTTP_PROXY` 对 undici 也不自动生效）。抓被墙地址一律 `Invoke-WebRequest -UseBasicParsing`。
 
 ## 规矩
 
 - **改代理前在回复里说一声**（「我开一下代理」），不要静默改系统设置。
-- **用完恢复原值**。
+- **用完恢复原值**，并清掉本进程的环境变量。
 - 用户手动开关过代理后，下次用之前**重新读原值**，别用缓存。
 
 ## 已知事实（2026-11-02 实测）
