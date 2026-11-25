@@ -46,7 +46,7 @@ $sc   = 'C:\Users\ZQY\.agents\skills\dsh\scripts\selfcheck.mjs'   # 技能内副
 
 **工具面统计会漏「按需激活」的工具**：`dsh-univer-office` 的 14 个 `univer_*` 工具默认不进工具面（包内 `activationGate`，默认 `skills: true` + 12 个 office/univer 技能名；调过这些技能之一后才出现，省约 21 KB 常驻）。判断方法：宿主 `Tool.listTools` 有而模型面没有，且该插件源码里 `ctx.tools.register(tool, { when })` 带条件——那是设计，不是掉线。
 
-**取数细则**：工作区子目录的可见阈值＝全量子目录里 ≥20 MB 或 ≥200 文件；HOME 的空间大头先看 `storages` / `attachments`（每次 API 上传的 PDF 副本、删会话不回收），nvidia 库与 `mineru3-test\venv` 动不得。体积数字以本轮 `--full` 实测为准，不凭印象。阈值与口径的历史变动依据见 `evidence/selfcheck.md` 第 1 节。
+**取数细则**：工作区子目录的可见阈值＝全量子目录里 ≥20 MB 或 ≥200 文件；HOME 的空间大头先看 `storages` / `attachments`（每次 API 上传的 PDF 副本、删会话不回收），nvidia 库与 `mineru4-venv` 动不得（`mineru3-test` 旧 venv 自 2026-11-25 起不再被引用，可删）。体积数字以本轮 `--full` 实测为准，不凭印象。阈值与口径的历史变动依据见 `evidence/selfcheck.md` 第 1 节。
 
 ## 2. 四个对话内哨兵（脚本证明不了，必须真调一次）
 
@@ -108,7 +108,7 @@ $sc   = 'C:\Users\ZQY\.agents\skills\dsh\scripts\selfcheck.mjs'   # 技能内副
 - 不许漏掉技能简介：只列名字等于没报（用户明确要求「三方技能附上简介」）。
 - 不许把插件清单写成一串「A 0.3 / B 0.4 / C 0.5」的段落：必须用表格，一个插件一行、五列（插件 / 版本 / 来源 registry·link·file / 状态 正常·异常·已卸 / 一句话用途），**不分组**。
 - 不许只报记忆问题不修：体检的结果必须落到库里的实际改动。
-- 不许动「不可动」清单：nvidia 库（GPU ASR）、`插件\dsh-raw-html-v2`（活引用 clone）、`tools\mineru3-test\venv`（MinerU 通道 + PDFium 兜底）、`tools\sci-venv`（历史变动依据见 `evidence/selfcheck.md` 第 6 节）。
+- 不许动「不可动」清单：nvidia 库（GPU ASR）、`插件\dsh-raw-html-v2`（活引用 clone）、`tools\mineru4-venv`（MinerU 4.x 通道 + PDFium 兜底）、`tools\sci-venv`（历史变动依据见 `evidence/selfcheck.md` 第 6 节）。
 - 不许在用户没同意时清理或升级任何东西——先报，再等指令（记忆库体检修正属已授权范围，可直接做）。
 - 不许只报「有新版」就动手：更新检查只出报告，升级要用户拍板。
 - 不许把 npm latest 当成上游最新版：非 registry 包只看 registry 就下结论「已最新」＝漏报；也不许把面板红点当误报一键忽略——先分清是本地装、git 装还是 npm 落后（见 5.4）。

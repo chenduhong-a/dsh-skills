@@ -43,7 +43,7 @@ $node = 'node'                                    # 或 DSH 自带 node.exe
 `logs` 里 7 天前的日志、`handover\selfcheck` 下 30 天前的 json。
 
 **不可动**：`插件\dsh-raw-html-v2`（活引用 clone）、
-`tools\mineru3-test\venv`（MinerU 运行时）、`tools\sci-venv`、`work\_pdftest`（用户拍板保留）。
+`tools\mineru4-venv`（MinerU 运行时）、`tools\sci-venv`、`work\_pdftest`（用户拍板保留）。
 
 ## 冒烟：脚本证明不了的部分
 

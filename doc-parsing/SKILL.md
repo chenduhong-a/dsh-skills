@@ -53,6 +53,6 @@ description: PDF、扫描件与 docx/pptx/xlsx 取文本、公式、表格、图
 | `PLUGINS_DIR` | 插件归档目录 | `C:\deepseek\插件` | 任选 |
 | `WORK_DIR` | 工作区 | `C:\deepseek\work` | 任选 |
 | `STUDY_DIR` | 学习资料 | `C:\deepseek\study` | 任选 |
-| `MINERU_VENV` | MinerU 3.4.5 的 venv | `C:\deepseek\tools\mineru3-test\venv\Scripts\python.exe` | 自建，固定后写回本表 |
+| `MINERU_VENV` | MinerU 4.2.3 的 venv | `C:\deepseek\tools\mineru4-venv\Scripts\python.exe` | 自建，固定后写回本表（2026-11-25 从 3.4.5 升上来；旧 `mineru3-test\venv` 已不被引用） |
 
 换机器三步：①确认 `DSH_HOME`、`SKILLS_DIR`、`NODE_BIN`；②本技能只有一个脚本 `scripts/mineru-online-probe.mjs`，常量在文件顶部（API 地址、token 路径），改成新路径再跑；③其余判据（版本号、报错串、行号、端口规则）与具体路径无关，通常不用改。

@@ -16,21 +16,25 @@
 
 **表格判定过严的代价**：为保证「双栏正文不被当表格」把 `lowConfidence` 并进 thin 判定后，58 页纯文字文档 **58/58 全送 MinerU**（首调 24 页 GPU ≈43 秒，其余报 `(skipped: MinerU page cap 24 reached)`）。根因是 `lowConfidence` 的语义为 `rows.some(r => r.cells.length !== maxCols)`——任何一行格数不齐即为真，考题/诗歌/目录几乎必中；修法 `(lowConfidence && maxCols >= 4)`。看到「整本都在送 MinerU」先怀疑判定过宽，别急着加机器。
 
-### 1.1 MinerU 版本：本机钉 3.4.5，不要上 4.x
+### 1.1 MinerU 版本：4.2.3 可用（4.1.7 的坑已修）
 
 **症状**：想升 4.x 拿更好的公式；或在本地跑 `standard`/`advanced` 直接报错。
 
-**判据**：4.1.7 本地只剩 `--tier flash`（只出文字，公式/图/表全是 `![Formula block](doc:…/block:N)` 空占位符），`standard/advanced` 报 `Local parse-server is disabled. Use --tier flash or --remote.`（`mineru\doclib\services\parse_execution_svc.py:385`）。4.x 的 `parse_server.local.mode` 有三值：`disabled`（默认）/ `managed`（MinerU 自己拉）/ `self_hosted`（你起，URL 填 `parse_server.local.self_hosted_url`）；`managed` 走 `sys.executable` 起子进程，但本地仍只支持 flash 档。**版本判定别信 `pip index` 或更新面板，用 venv 里的 exe 跑版本 + 实跑一页看有没有 LaTeX 段落**：`& "$MINERU_VENV" -m mineru --version` 或直接 `& "C:\deepseek\tools\mineru3-test\venv\Scripts\mineru.exe" --version`（venv 路径见附录）。
+**判据（4.1.7 时代的历史坑，2026-11-25 已被 4.2.3 修掉）**：4.1.7 本地只剩 `--tier flash`（只出文字，公式/图/表全是 `![Formula block](doc:…/block:N)` 空占位符），`standard/advanced` 报 `Local parse-server is disabled. Use --tier flash or --remote.`（`mineru\doclib\services\parse_execution_svc.py:385`）。4.x 的 `parse_server.local.mode` 有三值：`disabled`（默认）/ `managed`（MinerU 自己拉）/ `self_hosted`（你起，URL 填 `parse_server.local.self_hosted_url`）。
 
-**处置**：留在 3.4.5（`C:\deepseek\tools\mineru3-test\venv`）——pipeline 后端本地就能出 LaTeX 公式 + HTML 表格 + 图片；实测 kittel 3 页 77 秒（**含模型加载与冷启动**）、热态单页 1.2–7 秒、8 个公式块全 LaTeX——两个数字不是同一口径，别拿 77÷3 当每页成本。
+**4.2.3 的实测（2026-11-25，本机 RTX 5070 Ti + DirectML）**：`mineru-models-download --tier basic --small-backend onnx --source modelscope` 下 13 文件 / 839.3 MB 到 `C:\Users\ZQY\.mineru`；`tier=basic` 对 49 页物理论文出 **90 个 equation 块（`content` 就是 LaTeX）+ 91 张 jpg**，没有空占位符——**「4.x 只能 flash」这条已不适用，别再照着挡升级**。省略 `tier` 时服务端按 `standard→basic→flash→advanced` 自动选；显式给不支持的档会被拒。
 
-### 1.2 本地直调 HTTP API：比 CLI 快一个量级
+**版本判定别信 `pip index` 或更新面板，用 venv 里的 exe 跑版本 + 实跑一页看有没有 LaTeX 段落**：`& "$MINERU_VENV" -m mineru --version`，或直接 `& "C:\deepseek\tools\mineru4-venv\Scripts\mineru.exe" --version`（venv 路径见附录）。
+
+**处置**：已升到 **4.2.3**（`C:\deepseek\tools\mineru4-venv`），`dsh-doc-parser` 0.3.7 起按 4.x 的 `/v1/file_parse` 走。旧 venv `mineru3-test`（6.6 GB）与 `.cache\modelscope` 的旧模型（1180.2 MB）已不被代码引用，可删。历史对照：3.4.5 曾实测 kittel 3 页 77 秒（**含模型加载与冷启动**）、热态单页 1.2–7 秒、8 个公式块全 LaTeX——两个数字不是同一口径，别拿 77÷3 当每页成本。
+
+### 1.2 本地直调 HTTP API：4.x 是两个进程 + 一个 zip
 
 **症状**：CLI 一页 10–12 秒，批量太慢；或拿到的 `content_list` 是空的、公式只剩编号。
 
-**判据**：`POST $MINERU_API_URL/file_parse`，`MINERU_API_URL` 未设时默认 `http://127.0.0.1:18000`（不是 8000，`main.js:74`）（multipart，Node 原生 FormData/Blob），单页 1.2–6 秒（热态 1.2）。四个必带：`backend` 显式 `pipeline`（默认 `hybrid-auto-engine`）；`return_content_list=true`（默认 false，不传就没 blocks）；`formula_enable=true` + `table_enable=true`（否则公式只剩 `\tag{}` 编号）；页号 0-based（见 §2.3）。`content_list` 是 JSON 字符串，要 parse 一次。
+**判据（4.x）**：`mineru-api.exe` 默认 **18000**，但它只有**异步** `/v1/tasks`；同步单文件口在另一个进程 `mineru-kit file-parse-server --api-url http://127.0.0.1:18000 --port 18001`，对外 `POST /v1/file_parse`。四个要点：①multipart 只认**单个** `file`（不是 `files`）；②`tier`（flash/basic/standard/advanced，省略则服务端按 `standard→basic→flash→advanced` 自动选）、`ocr_mode`（auto/txt/ocr）、`output_formats`（数组，`default` 给 zip）、`page_range`（**1-based 字符串**，如 `1-3`）；③响应是 **200 + 二进制 zip**（`application/zip`；202 才是 `StatusResponse`，带 status_url 要轮询）；④zip 里是 `structured_content.json`（`pages[].blocks[]`）+ `images/` + `markdown.md`，block 统一 `content` + `image_source`（`images/page_<n>_equation_<k>.jpg`，**不是** 3.x 那种 base64 data URI），`page_idx` 从 0 起算所以 `pnum = lo + page_idx`。解压用 `tar -xf`（Windows 自带 bsdtar 能解 zip，实测 exit 0）。实测：49 页物理论文 `tier=basic` 首轮 82.6 秒、3 页热态 2.6–3.9 秒。
 
-**处置**：文件 >120 MB、页跨度 >40、服务不通 → 退回 CLI。
+**处置**：文件 >120 MB、页跨度 >40、服务不通 → `mineruHttpPages()` 返回 null，上游按「这段没解析出来」处理；**4.x 的 CLI 兜底尚未按 4.x 重写**（`lib/ocr_mineru.py` 还是 3.x 的 `mineru --tier` 写法），插件里加了闸门——检测到 venv 里有 `mineru-kit.exe` 就抛「同步通道（/v1/file_parse）没能解析这段页码，CLI 兜底尚未按 4.x 重写」而不是给假结果。
 
 ### 1.3 在线通道 mineru.net：四步，别自己猜
 

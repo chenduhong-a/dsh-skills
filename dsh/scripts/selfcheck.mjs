@@ -84,7 +84,7 @@ const SAFE_TO_CLEAN = [
 ];
 const DO_NOT_TOUCH = [
   'C:\\deepseek\\插件\\dsh-raw-html-v2（活引用 clone，插件本体）',
-  'C:\\deepseek\\tools\\mineru3-test\\venv（MinerU 常驻 API 的运行时）',
+  'C:\\deepseek\\tools\\mineru4-venv（MinerU 4.x 常驻 API 的运行时）',
   'C:\\deepseek\\tools\\sci-venv（科学计算环境）',
 ];
 
