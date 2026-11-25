@@ -62,16 +62,18 @@
 
 ### 2.1 第 3 步到底查什么
 
-- `dependencies` 条数对了没有（`26 deps` 是本机 2026-11-18 的基线）；
-- `dsh.profile.bundles` 条数对不对（同期基线 `38 bundles`），目标包在不在里面；
-- `dsh plugin --profile desktop list` 里 `missing bundles` 是否为空、有没有 `Cannot validate` 告警。
+- `dependencies` 条数对了没有（2026-11-18 当时基线 `26 deps`；之后装卸会变，以当轮实测为准）；
+- `dsh.profile.bundles` 条数对不对（同期基线 `38 bundles`；2026-11-26 实测已 37），目标包在不在里面；
+- `dsh plugin --profile desktop list` 里有没有 `Cannot validate` 告警。
 
-**换版必查 bundles（2026-11-18）**：pnpm 换插件版本会把该包从 `dsh.profile.bundles` 里删掉——deps 仍在、bundles 少一条、`inBundles=false`，重启后该插件所有工具消失或预设加载失败。修法：用 node 按字母序把包名插回原位，复核 declared-bundle 缺失为空。
+**旧结论 → 现结论（2026-11-26 更正）**：原写「缺 bundle 的字段是否为空」——**没有这个字段**。这个「缺 bundle」先后被写成字段名、口语说法、短名三种样子，2026-11-26 扫 asar 证实宿主一个都没有（`dsh plugin` 的插件行 schema 只有 `entryId` / `name` / `version` / `enabled` / `fiberPhase` / `diagnostic` / `readOnlyReason`）。该命令输出是 pnpm 依赖树，不报「谁没进 bundles」；要验只能人工把 `dsh.profile.bundles` 与 `node_modules` 逐个比对。
+
+**换版必查 bundles（2026-11-18）**：pnpm 换插件版本会把该包从 `dsh.profile.bundles` 里删掉——deps 仍在、bundles 少一条，重启后该插件所有工具消失或预设加载失败。修法：用 node 按字母序把包名插回原位，复核 bundles 里每条都能在 `node_modules` 找到。
 
 ### 2.2 bundles 的 reconcile 分版本两套
 
 - **0.2.1 及更早**：`dsh plugin` 跑完 pnpm 后按 dependencies 重建，声明 `dsh.bundle` 的依赖自动加回；要持久移除得同时删 dependencies 与 bundles。
-- **0.2.2-rc.1 起不再自动补**：2026-11-03 升 meow-memory 0.32.5 后它从 bundles 掉出、deps 还在 → `memory_*` 全 unknown tool；`dsh plugin add` 连跑两次都没补回，只能手工在 `profiles\desktop\package.json` 的 `dsh.profile.bundles` 加回包名，hot-installer 热重载即恢复。`inspectProfileConsistency` 只报「装了但未声明」，不会自动重加。
+- **0.2.2-rc.1 起不再自动补**：2026-11-03 升 meow-memory 0.32.5 后它从 bundles 掉出、deps 还在 → `memory_*` 全 unknown tool；`dsh plugin add` 连跑两次都没补回，只能手工在 `profiles\desktop\package.json` 的 `dsh.profile.bundles` 加回包名——**当时**补回后靠 hot-installer 热重载即恢复（**旧结论，该插件 2026-11-22 已卸**；现在不必依赖它，补回 bundles 后热重载 / 刷新客户端即回，见 `references/ops.md` 第 3 节）。`inspectProfileConsistency` 只报「装了但未声明」，不会自动重加。
 
 ### 2.3 装完第一次重启是风险点（2026-11-11 案例）
 
@@ -170,8 +172,8 @@ StudyHub 0.2.2 实测两处：①`dsh-tool-subagent-control` 去掉了 `./list-a
 - **补丁是否真落地，用 mtime + 内容双验（2026-11-10 教训）**：改插件内部文件（如 `presets/*.patch.yml`）必须确认改的就是宿主真正加载的那份——`C:\Users\ZQY\.dsh\profiles\desktop\node_modules\<pkg>\...`。当时我 12:52 报「已重放、13972 B」，但该文件 mtime 仍停在 12:49（安装时刻）、内容还是旧模板，重启后功能照样失败；13:51 直接改 node_modules 这份才生效。命令退出码不算证据。
 - **当前要重放的补丁（2026-11-18 在册 6 组，节选）**：
   - `patches\reapply-market-entry-off.ps1`（**2026-11-19 已移入 `patches\_obsolete\`，当前 patches 只剩 3 个文件；补丁逻辑仍成立，需要时从 _obsolete 取回重打**）：桌面升级会整体重写 `C:\deepseek\DSH Desktop\resources\`，把 `dsh-desktop-market-installer` 的 `disabled: true` 抹掉、设置侧栏「插件市场」入口回来（0.8.1 / 0.8.2 / 0.9.0 三次都中）。脚本幂等、保留上游 CRLF、`-CleanPending` 顺带清同版冗余安装包；升级后跑一次 + dump-config/冷启动复核（0.9.0 后重打 2966 B / SHA256 08471E1F…）。能落在 harness home（`profiles\web\vendor`、`cordis.patch.yml`、`settings.yaml`）的改动优先落那边，不受应用升级影响。
-  - `C:\deepseek\tools\studyhub-preset-patch.mjs`：StudyHub 作者的 `presets/study.patch.yml` 长期不改（仍带 `tool-subagent-list-agents`、`modelSelectionSettings: true`、两处 `backgroundMode: continuable`），每次升级都要重放（4.13.0 实测 3 处，打完 14,878 B、22 个 plugins 解析通过）。脚本幂等、`--check` 只报告、作用目标固定为宿主加载的那份。
-  - `C:\deepseek\tools\billion-ungate-patch.cjs`：billion-context 的 `dist/agent/dsh-compaction-gate.js` 会在 `internal/config` 钩子里把 `dsh-compaction-basic` 与 `dsh-command-compact` 设为 `disabled:true`（`/compact` 因此消失）。补丁把该判断改掉（文件 2589→2519 B，备份在 `插件\backups\dsh-compaction-gate.js.20261118.bak`），billion 升级会覆盖、要重跑。内核 rc.3 的 dsh-base patch 一直挂着该命令，从来不是内核移除。
+  - `C:\deepseek\tools\studyhub-preset-patch.mjs`（2026-11-24 起以 `skills\dsh\scripts\studyhub-preset-patch.mjs` 为现行版，`tools\` 下是历史副本）：StudyHub 作者的 `presets/study.patch.yml` 长期不改（仍带 `tool-subagent-list-agents`、`modelSelectionSettings: true`、两处 `backgroundMode: continuable`），每次升级都要重放（4.13.0 实测 3 处，打完 14,878 B、22 个 plugins 解析通过）。脚本幂等、`--check` 只报告、作用目标固定为宿主加载的那份。
+  - `C:\deepseek\tools\billion-ungate-patch.cjs`（现行版同 `skills\dsh\scripts\billion-ungate-patch.cjs`）：billion-context 的 `dist/agent/dsh-compaction-gate.js` 会在 `internal/config` 钩子里把 `dsh-compaction-basic` 与 `dsh-command-compact` 设为 `disabled:true`（`/compact` 因此消失）。补丁把该判断改掉（文件 2589→2519 B，备份在 `插件\backups\dsh-compaction-gate.js.20261118.bak`），billion 升级会覆盖、要重跑。内核 rc.3 的 dsh-base patch 一直挂着该命令，从来不是内核移除。
   - 皮肤类：`patches\replay-skins-deblur.py`（把 `[data-*-panel-page] [class*=centerCol]:before` 的 content 改 none）升级皮肤后必须重跑；附件类补丁（如 raw-html 的「首次捕获自动重挂载一次」，上游没有这个机制）每次升级都要按上一节流程重放，并用 `node --check` 过一遍。
 
 ## 7 Windows 侧坑（高频）
@@ -186,4 +188,4 @@ StudyHub 0.2.2 实测两处：①`dsh-tool-subagent-control` 去掉了 `./list-a
 
 - **退出码不是判据**（细节）：一次性 headless 探针里，meow-memory 会让进程回合完成后永不退出（dream 调度/心跳定时器未 unref；0.25.0 有 setInterval 2 + setTimeout 2，0.26.0 各 3，均无 `.unref()`），属既有特性。只带 dsh-context 的探针 3.1 s 自行退出并答出 "probe ok"；只带 meow-memory 的同样答出却 110 s 不退出。正确姿势：`Start-Process` 重定向 stdout 到文件 + 自行轮询超时再杀，判据取「stdout 是否出现预期答复 + 会话日志有无 turnError」。
 - **隔离探针**：`profiles\probe` 的 `package.json` 里 `dsh.profile.bundles=[dsh-base, dsh-headless, 被测插件]`，依赖写 `file:../web/vendor/<pkg>`，`pnpm-workspace.yaml` 照抄 web，`cordis.yml=[]`；`pnpm install` 后跑 `node bin.js --profile probe "<task>"`，验完 `rd /s /q` 删除，JSON 必须无 BOM。**副作用（复发两次）**：探针会话按 cwd 落进 `sessions\<workspace-slug>\`（不按 profile）→ 混进主侧栏；删 probe profile ≠ 删会话。根治：跑探针时给独立工作目录（`Start-Process -WorkingDirectory`）。
-- **别拿 univer_new 建探针文件**（2026-11-07 用户明确否掉）：每建一次 `.univer`，侧栏多出「文档」面板并自动打开、每轮刷新还恢复视图；Univer 服务把它当「当前打开的文档」锁死，`Remove-Item` / 改名 / `rmdir /s` 全失败，只能完全退出 DSH 再删。替代：只查工具面里 `univer_*` 那组在不在 + `dsh-univer-office` 在 bundles 里；非要验写读就用 `univer_status` 读已存在文件。
+- **别用 Univer 的建文件接口造探针文件**（2026-11-07 用户明确否掉）：每建一次 `.univer`，侧栏多出「文档」面板并自动打开、每轮刷新还恢复视图；Univer 服务把它当「当前打开的文档」锁死，`Remove-Item` / 改名 / `rmdir /s` 全失败，只能完全退出 DSH 再删。替代：只查工具面里 `univer_*` 那组在不在 + `dsh-univer-office` 在 bundles 里；非要验写读就用 `univer_status` 读已存在文件。

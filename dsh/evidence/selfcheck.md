@@ -7,10 +7,11 @@
 ## 0. 脚本与落档（原第 0 节）
 
 - 原文标着「**脚本性质与时区（2026-11-06 记 / 2026-11-13 复核）**」：零依赖，只用 Node 内置模块 + `node:sqlite` 只读直读记忆库；同目录另有 `README.md`。多工作区由 `WS` 常量驱动（cwd 含 `.dsh-mind` 就用 cwd，否则退回 `C:\deepseek\work`）：记忆库、落档目录、可清清单、残留扫描、差分标签全部随 WS。
-- 运行耗时口径：`--full` 约 20 秒、`--quick` 约 9 秒、`--only` 0.2 秒级（原第 0 节的经验值，非硬指标）。
+- 运行耗时口径：`--full` 约 20 秒、`--quick` 约 10 秒、`--only` 秒级（原第 0 节的经验值，非硬指标；脚本头注的 20~40 秒是会话多时的上限）。
 - 落档文件名用本地时间，格式 `<本地时间>-<模式>.json`。
+- **单副本约定（2026-11-24）**：`scripts\selfcheck.mjs` 此后只有技能里这一份，不再维护 `C:\deepseek\tools\` 的旧副本、也不做哈希校验；旧的双副本维护要求只作历史。
 
-## 1. 十一项（原第 1 节）
+## 1. 十二项（原第 1 节）
 
 - 03 三方插件：表格规则的时间线——「2026-11-10 定「一个插件一行」，2026-11-17 追加「别分组」」。
 - 07 记忆：原文括注「**库路径按 cwd 优先**……（2026-11-13 改，脚本输出会标「库=」）」——该轮把库路径从固定路径改为按 cwd 优先。
@@ -21,7 +22,7 @@
 ## 2. 四个哨兵（原第 2 节）
 
 - 注入判据的来由：2026-11-11 明确——本轮没有注入块但 `memory_search` 正常，判为「关键词未命中」，不算故障；要强验证就开个新会话看首轮有没有横条。
-- `univer_new` 禁令的经过：2026-11-07 用户明确否掉——「会在侧栏弹出文档窗、服务把文件锁死删不掉，`%TEMP%` 还会被 `SESSION_SCOPE_DENIED` 拒绝」。
+- `univer_` 建文件接口的禁令经过：2026-11-07 用户明确否掉——「会在侧栏弹出文档窗、服务把文件锁死删不掉，`%TEMP%` 还会被 `SESSION_SCOPE_DENIED` 拒绝」。
 
 ## 3. 报告格式（原第 3 节）
 
@@ -42,7 +43,7 @@
 
 ## 5.3 SKILL.md 与 `selfcheck.mjs`（原第 5.3 节）
 
-- 2026-11-20 复核时两份副本：**569 行 / 29,192 B、md5 `57B11699085D1BC4CBB8CB21CDA1CCA1`**。
+- 2026-11-20 复核时脚本 **569 行 / 29,192 B**（当时还维护双份，现已废）。
 - 该版改动：在 `--quick`/`--full` 末尾加「待人工对账」四件清单与超长计数、头注释「九项」改「十一项」、`PURPOSE` 表旧包名 `dsh-pdf-enhanced` 改 `dsh-doc-parser`、删掉 3 个已卸包并补齐 6 个缺条目、修好 `--only 03` 不出插件清单的绑定 bug。
 
 ## 5.4 更新检查（原第 5.4 节）
@@ -72,7 +73,7 @@
 
 - 2026-11-03 取数细则成形。
 - 2026-11-06 脚本性质与时区首次记录。
-- 2026-11-07 禁 `univer_new` 探针（用户否掉）。
+- 2026-11-07 禁用 Univer 建文件接口造探针（用户否掉）。
 - 2026-11-09 要求三方技能附简介；发现插件说明停在 10-20；`work\_pdftest` 删除。
 - 2026-11-10 插件清单定为「一个插件一行」。
 - 2026-11-11 记忆注入判据：无注入块但 `memory_search` 正常＝关键词未命中，不算故障。
@@ -82,11 +83,11 @@
 - 2026-11-17 插件表「别分组」。
 - 2026-11-18 StudyHub GitHub releases v4.13.0（07:58Z）；`dsh-doc-parser\ocr-venv` 随 Indra 移除。
 - 2026-11-19 脚本加「待人工对账」四件与超长计数；要求汇报附更新说明；插件说明基准同步到 0.2.2-rc.5 / 26 deps 38 bundles。
-- 2026-11-20 脚本副本复核为 569 行 / 29,192 B / md5 见 5.3 节；`dsh-qqbot-bridge` 已卸。
-- **2026-11-20 17:32 换装 meow-mind 后**：脚本 29,774 B / md5 `1B892C9FC7944819B50E66D3C30430AD`（两副本一致，`C:\deepseek\tools\selfcheck\selfcheck.mjs`）；改动三处：①记忆库判定改为 `.dsh-mind` 优先、旧 `.dsh-meow` 兜底；②活跃口径从 `status='active'` 改成 `status IN ('active','memory','evolution')`（新库没有 `active`，不改恒为 0）；③`PURPOSE` 表 `meow-memory` 换成 `meow-mind`。实测 `--only 07` 读到新库 437/933、db 8.36 MB。
-- **2026-11-20 18:02 自检后**：脚本 **29,805 B / 575 行 / md5 `7C3FFB3460AE327D8F23EF27B5ED9F08`**（两副本一致）；`PURPOSE` 表 meow-mind 条目从「13 工具 + 关系网 + 自动捕获」改成「**14** 工具 + 关系网 + 自动捕获 + `/dream` 指令 + 沉淀候选」。**修的口径漂移**：插件后来加了第 14 个工具（`memory_feedback`），表里仍写 13，自检输出就跟着报旧数——加工具时 `PURPOSE` 表的数字要同步。
+- 2026-11-20 脚本复核为 569 行 / 29,192 B（读数见 5.3 节）；`dsh-qqbot-bridge` 已卸。
+- **2026-11-20 17:32 换装 meow-mind 后**：脚本 29,774 B（当时双份一致，`C:\deepseek\tools\selfcheck\selfcheck.mjs`）；改动三处：①记忆库判定改为 `.dsh-mind` 优先、旧 `.dsh-meow` 兜底；②活跃口径从 `status='active'` 改成 `status IN ('active','memory','evolution')`（新库没有 `active`，不改恒为 0）；③`PURPOSE` 表 `meow-memory` 换成 `meow-mind`。实测 `--only 07` 读到新库 437/933、db 8.36 MB。
+- **2026-11-20 18:02 自检后**：脚本 **29,805 B / 575 行**（当时双份一致）；`PURPOSE` 表 meow-mind 条目从「13 工具 + 关系网 + 自动捕获」改成「**14** 工具 + 关系网 + 自动捕获 + `/dream` 指令 + 沉淀候选」。**修的口径漂移**：插件后来加了第 14 个工具（`memory_feedback`），表里仍写 13，自检输出就跟着报旧数——加工具时 `PURPOSE` 表的数字要同步。
 - **2026-11-21 13:08 自检**：26 deps / 38 bundles（与基线一致，掉队 0 / 多余 0）、26 个插件、记忆 444 活跃 / 946 全量 / db 8.59 MB、工作区 216.4 MB / 295 文件（差分 683→216.4，因为 11-20 删了 meow-mind 的 464 MB 开发依赖）、HOME 6921.6 MB。**新澄清的一个口径**：脚本报「>800 字 0 条」是**活跃口径**（`status IN ('active','memory','evolution')`）；**全库不限状态**其实有 **51 条 >800 字，全部是 `review` 状态**——它们是迁移时从旧库 `archived`/`stale` 映射过来的沉淀，不参与注入、不参与排序，**不是漏报也不是待修问题**。报超长时必须说明是哪个口径，否则读数看着自相矛盾。
-- **2026-11-21 13:12 脚本改动**：`selfcheck.mjs:195` 的 `source` 判定补上 `git` 分支——原来只有 `link:` / `file:` / 其余一律 `registry`，而 `bili-vision` 的 spec 是 `git+https://gh-proxy.com/https://github.com/icyaaaww/dsh-bili-vision.git#v0.2.0`，被误判成 registry 后更新检查会去查 npm（必然 404）。新判定 `spec.startsWith('link:') ? 'link' : spec.startsWith('file:') ? 'file' : /^(git\+|github:|gitlab:|bitbucket:|https?:\/\/\S+\.git)/.test(spec) ? 'git' : 'registry'`。脚本 **30,026 B / md5 `96AB4C307D4EBC86A60FBFBC02AAEF3D`**（两副本一致，`node --check` 通过），`--only 03` 复跑确认 `bili-vision` 现在显示 `git`。**教训**：`selfcheck.mjs` 的 `--only` 编号只到 10，**更新检查不在脚本里**，是我按本文件手动做的第 11 项——别去 `--only 11`。
+- **2026-11-21 13:12 脚本改动**：`selfcheck.mjs:195` 的 `source` 判定补上 `git` 分支——原来只有 `link:` / `file:` / 其余一律 `registry`，而 `bili-vision` 的 spec 是 `git+https://gh-proxy.com/https://github.com/icyaaaww/dsh-bili-vision.git#v0.2.0`，被误判成 registry 后更新检查会去查 npm（必然 404）。新判定 `spec.startsWith('link:') ? 'link' : spec.startsWith('file:') ? 'file' : /^(git\+|github:|gitlab:|bitbucket:|https?:\/\/\S+\.git)/.test(spec) ? 'git' : 'registry'`。脚本 **30,026 B**（当时双份一致，`node --check` 通过），`--only 03` 复跑确认 `bili-vision` 现在显示 `git`。**教训**：`selfcheck.mjs` 的 `--only` 编号只到 10，**更新检查不在脚本里**，是我按本文件手动做的第 11 项——别去 `--only 11`。（2026-11-26 更正：脚本已加 `--only 11` 别名，内部映射到 03。）
 - **2026-11-21 更新检查结果**：registry 装 17 个（不是 18，`bili-vision` 是 git）——**`cc-safety-net 2.8.0 → 2.8.1` 可更新，其余 16 个已最新**。2.8.1（2026-11-20）的内容：rulebook v2 可声明 `options_with_values`（带值选项先出现时 `command_path` 仍能匹配，如 `kubectl -n payments delete pod api`）、fixture 校验改成走 hook 实际用的分析器（`sudo`/`env FOO=1`/`timeout 30`/`bash -c` 这类包装写法现在能作为有效 `blocked` fixture）、**安全修复：fixture 评估不再碰文件系统**（防下载的 rulebook 让 CLI 读任意路径）。**对本机的实际影响很小**——我们用默认规则集、没写自定义 rulebook，`options_with_values` 用不上；但 fixture 分析与安全修复属底层逻辑，升级无兼容风险。
 - **`cc-safety-net` 的管理入口是 `dist\bin\cc-safety-net.js`**（2026-11-21 实测）：跑 `dist\cli.js` 静默无输出、也不报错，容易被当成「命令没执行」；改规则/查状态走 bin 入口，有 `--help` 输出才算跑对。
 - **2026-11-21 记忆体检处置**：①`project 0mvuk4zug-…`（569 字）整条还在描述已卸载的 meow-memory 0.33.1（工具 7 个、库 `.dsh-meow`、`promptLang` 配置）→ 改写成 meow-mind 0.1.0 现状（14 工具、双通道召回、关系网、`/dream`、自动捕获、三条纪律），标题回填、importance 2→3；②`topic 0mw4te8v4-…`（474 字）里「库在 `.dsh-meow`、dream_log/windows/dream_meta 三表、393 active / 886 全量」→ 改成 `.dsh-mind`、新表清单、444/946，并补一句「review / archived 状态的长条目不算超长问题」；③`project` 列 `meow-memory` → `meow-mind` **12 条**（4 条活跃 + 8 条 review），`memory_update` 没有 `project` 参数，只能 SQL 直改。**技能引用复核**：24 处命中旧名，全部合规——`evidence/*.md` 里的历史案例（带日期、是证据）、`selfcheck.mjs:44/46/50/53/76` 的 `.dsh-meow` 兜底判定、`memory-collab` 与 `selfcheck.md` 里「旧库只作回滚保留」的说明性文字。**没有一处要改**。

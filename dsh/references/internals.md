@@ -1,8 +1,3 @@
----
-name: dsh-internals
-description: DSH 内核与现场取证手册——查「功能怎么实现 / 这条会话当时说了什么 / GUI 那个报错是什么 / 上下文账为何爆」时加载，覆盖服务注册与契约、凭据与模型声明、会话日志格式、GUI console 噪音、上下文计费五条取证路径。只取证不装不修。
----
-
 # DSH 内核与现场取证
 
 > 只回答「到底发生了什么」。装插件、升级内核、修坏掉的东西走 `references/ops.md`；写插件、改 preset 走 `references/plugin-dev.md`。本文件是执行口径：路径、命令、判据、红线。案例、实测数字与「当时以为是 X 结果是 Y」的排查过程在 `evidence/internals.md`（若按 `references/` + `evidence/` 目录装配，则为 `evidence/internals.md`）——执行时不必读，只在怀疑判据过时或需要交代依据时翻。
@@ -37,9 +32,8 @@ description: DSH 内核与现场取证手册——查「功能怎么实现 / 这
 
 **症状**：要在旧会话里逐字回取一段话；侧栏标题找不到对应目录；同一条回答显示了两遍；或日志改完会话从列表里消失。
 
-**3.1 存在哪、怎么找**：会话按 **cwd 分桶**，不按 profile：`$DSH_HOME\sessions\<workspace-slug>\session-<uuid>\`。侧栏标题不在会话日志里，在投影缓存 `%APPDATA%\dsh-desktop\harness\storages\session_projcache\sessions\<sessionId>.json`，直接 grep 形如 `"val": "标题"` 的字符串，比解压 zstd 快得多。按标题定位 / 删除：①在 `...\session_projcache\sessions\` 下 grep 标题，文件名即 `<sessionId>.json` → 会话 id；②判当前会话读 `profiles\<profile>\desktop-storage.json` 的 `dsh.sessions.current`，别误删正在写的；③删两处——会话目录 `$DSH_HOME\sessions\<cwd-slug>\session-<id>\`（含 v1 / v3 / v4 三代文件）+ 投影缓存 JSON；④复核：两个路径 `Test-Path` 都为 False；⑤侧栏可能短暂仍显示（客户端有会话顺序缓存），刷新页面即对账；**不要改 `desktop-storage.json`**，进程内存副本会覆盖手改。
-**路径更正（2026-11-21 实测）**：投影缓存在 `$DSH_HOME\storages\session_projcache\sessions\`，`%APPDATA%\dsh-desktop\harness` 本机已不存在。
-旧社区版才把数据硬编码在 `%APPDATA%\dsh-desktop\harness`，与本版 `DSH_HOME` 互不相认——换版本不继承，要手动搬。
+**3.1 存在哪、怎么找**：会话按 **cwd 分桶**，不按 profile：`$DSH_HOME\sessions\<workspace-slug>\session-<uuid>\`。侧栏标题不在会话日志里，在投影缓存 `$DSH_HOME\storages\session_projcache\sessions\<sessionId>.json`，直接 grep 形如 `"val": "标题"` 的字符串，比解压 zstd 快得多。按标题定位 / 删除：①在 `...\session_projcache\sessions\` 下 grep 标题，文件名即 `<sessionId>.json` → 会话 id；②判当前会话读 `profiles\<profile>\desktop-storage.json` 的 `dsh.sessions.current`，别误删正在写的；③删两处——会话目录 `$DSH_HOME\sessions\<cwd-slug>\session-<id>\`（含 v1 / v3 / v4 三代文件）+ 投影缓存 JSON；④复核：两个路径 `Test-Path` 都为 False；⑤侧栏可能短暂仍显示（客户端有会话顺序缓存），刷新页面即对账；**不要改 `desktop-storage.json`**，进程内存副本会覆盖手改。
+旧社区版才把数据硬编码在 `%APPDATA%\dsh-desktop\harness`，与本版 `DSH_HOME` 互不相认——换版本不继承，要手动搬（2026-11-21 实测更正：本机已无 `%APPDATA%\dsh-desktop\harness`，依据见 `evidence/internals.md` 第 3 节）。
 
 **清探针会话**：探针同样按 cwd 落桶，删了 profile 与临时目录它还在。扫 `$DSH_HOME\sessions\` 下的日志帧，搜 `"probe ok"` / `"探针通过"` 等标记，**排除当前会话 id** 后再删目录；根治是跑探针时用独立工作目录（`Start-Process -WorkingDirectory`），让它落进另一个桶。
 
@@ -67,7 +61,7 @@ fs.writeFileSync(outFile, Buffer.concat(parts));
 
 **症状**：GUI 红字 / 白屏 / 消息渲染异常，需要 console 原始错误；或想用 BrowserSkill 直接打开 GUI 抓 console。**判据（BrowserSkill 为什么不行）**：BrowserSkill 连的是用户本机 Chrome（独立实例），抓不到 Electron GUI 的 console；用它打开 `http://127.0.0.1:<port>` 会返 **401** `dsh web authentication required`——GUI token 只在 Electron 启动时的地址栏 URL（`?token=`）里，不落盘（`~\.dsh\logs` 下只有一个空壳 dsh-hot-installer 目录，该插件 2026-11-22 已卸），进程命令行也搜不到。**处置**：①让用户在 GUI 窗口按 `Ctrl+Shift+I` → Console，复制红色错误（含 stack）——唯一直接来源；②或让用户发含 token 的完整 URL（形如 `http://127.0.0.1:<port>/?token=...`）——**带 token 的 URL 用 BrowserSkill 能打开**（鉴权只认 URL 参数），裸端口直接开才 401。
 
-### 4.1 三类 console 噪音，只有第三类是真错
+### 4.1 四类 console 噪音，只有第四类是真错
 
 | 现象 | 判据 | 处置 |
 | --- | --- | --- |

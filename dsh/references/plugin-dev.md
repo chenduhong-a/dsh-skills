@@ -1,15 +1,10 @@
----
-name: dsh-plugin-dev
-description: DSH 插件与工具的作者手册——工具定义契约、缓存与 force 的语义、解析器写法、免重启自测、输出给模型看的写作规则、收尾检查清单。写新插件、改别人的插件、给工具加参数或 force 时加载。执行只读本文件，案例与实测在 evidence/plugin-dev.md。不含装卸升级（见 references/ops.md）。
----
-
 # DSH 插件作者手册（执行面）
 
 > 读者是插件作者，不是运维。本文件只留「怎么做」与契约；每节第二行的指针指向该判据的翻车现场（`evidence/plugin-dev.md`，按节号查）。
 
 ## 判据
 
-**什么时候翻**：新写 DSH 插件，或给已有插件加工具、加参数、加 `force`；改别人写的插件（含另一个工作区改过的共享插件）；现象是「工具注册了但调不到」「force 没反应」「输出骗人」「能用但慢得离谱」「改名后模型还在找旧工具」；要给插件做自测/回归，或给测试 agent 写任务书。
+**什么时候翻**：新写 DSH 插件，或给已有插件加工具、加参数、加 `force`；改别人写的插件（含另一个工作区改过的共享插件）；现象是「工具注册了但调不到」「force 没反应」「输出骗人」「能用但慢得离谱」「改名后模型还在找旧工具」；要给插件做自测/回归，或给测试 agent 写任务书；要给自研插件做**全量缺陷测试**（按 §6.7 四片分法切面、派子代理并行跑）时也翻本篇。
 
 **不归这里管**：装/升/卸已装包、门控、版本真伪 → `references/ops.md`；环境体检 → `references/selfcheck.md`；审第三方插件能不能装 → 本技能「门控四层」+ 解包六类 grep 人工审（`child_process`/`net`/`eval`/写盘 API/外连 URL/`process.env`）。
    - **六类 grep 的可用正则**：①`child_process|spawnSync|spawn\(|execSync` ②`net|dgram` ③`eval\(|new Function` ④`writeFile|createWriteStream|unlink` ⑤`process.env` ⑥`"(pre|post)?install"`（`package.json` 的 scripts）；六类 0 命中却仍联网/写盘＝换了写法（base64、`Function` 拼接、原生 addon）。
@@ -65,7 +60,7 @@ function text(value) { return [{ type: 'text', text: String(value) }]; }
 - **必填**：工具在 `apply(ctx)` 里用 `ctx.tools.register(def)` 注册，`def` 写全 `name`/`description`/`parameters`，外加 `output: {schema, render}`——后者在内核里是 readonly 必填项。
 - **红线**：漏 `output`，该工具会被 register 的 try/catch **静默跳过**，宿主报 `unknown tool`；而白盒 apply 用假 `ctx` 不校验 output → 测试全绿是假绿。
 - **反推别人的 API 要读两份契约**：注册契约之外还有返回值契约——枚举值、错误码、字段可选性都在后者，只抄「怎么注册」再自己扩枚举会在边界值静默失败；判据＝能指出该 API 在源码里的定义位置与调用方实际用法，两点对上才算反推成功。
-- **注册成功 ≠ 可用**：热重载不重新注册工具，改完必须重启宿主，再验工具面与最小用例。
+- **注册成功 ≠ 可用**：热重载不重新注册工具，改完必须重启宿主，再验工具面与最小用例。**适用边界**：改插件 JS 代码、新增或改工具定义 → 必须电源键完全退出重启；只改技能 md、或只把包补回 `dsh.profile.bundles` 不在此列，热重载 / 刷新客户端即回（见 `references/ops.md` 第 3 节）。
 - **改参数**：改完用 `read` 复查整个对象——edit 插参数最容易连带删掉相邻的 `output:` 与 `timeoutMs:`，一次只改一处、改完就读。
 - **共享字段**：多工具里一字不差的同一段（两处 `maxChars`）直接 edit 报 `matched 2 times`，必须带上前一个参数匹配出唯一锚点。
 
@@ -171,7 +166,7 @@ function text(value) { return [{ type: 'text', text: String(value) }]; }
 | 配置与缓存面 | 优先级链、缓存键、命中/失效 | fail-open、缓存键缺字段、命中绕过新逻辑 |
 | 文档一致性面 | README / 注释 / 工具 description | 与代码脱节、行号漂移、写了但没实现 |
 
-**派活时任务书必须写死的边界**（漏一条就可能被误伤）：
+**派活时任务书必须写死的边界**（通用六样见 §6.2，另加这几条，漏一条就可能误伤）：
 - **只读源码、不改代码/配置/不重启宿主** —— 插件是进程内加载，改代码不重启等于没改，会让它拿旧代码测新逻辑；
 - **业务材料只读**；**会上传的通道（`doc_parse` 之类）只许自造文件**；
 - 自造文件统一落 `C:\deepseek\work\_bt_*`、结束自删；
@@ -189,16 +184,16 @@ function text(value) { return [{ type: 'text', text: String(value) }]; }
 
 **派子代理的节奏**：多片在**一个 message 里并行 `subagent`**，每片一份报告落到 `handover\bugtest-<片名>.md`，回来自己合并去重（跨片重叠很常见）。
 
-## 7. 自建插件的署名（2026-11-21 定，用户口径）
+## 7. 自建插件的署名（2026-11-24 起）
 
-**默认只对新写的自建插件生效，已有的不主动回头补**；用户点名要补时才补（2026-11-21 已按用户要求给 `meow-mind` 0.1.0 与 `dsh-doc-parser` 0.3.6 补上，其余保持原样）。
+**默认只对新写的自建插件生效，已有的不主动回头补**；用户点名要补时才补。
 
-新建自建插件时，`package.json` 顶层的 `author` 写成 **`姓名 · 会话码`**，与技能 frontmatter 同一格式：
+新建自建插件时，`package.json` 顶层的 `author` 写**所属线的标识**（`ZQY-LD` / `ZQY-LB`），**不带会话码**——换会话不换线时不用改（与 `$DSH_HOME\AGENTS.md` 第四节同口径）：
 
 ```json
-{ "name": "my-plugin", "version": "0.1.0", "author": "ZQY · LD-BA49BC34-894F" }
+{ "name": "my-plugin", "version": "0.1.0", "author": "ZQY-LD" }
 ```
 
-- **码的来源**：`<用途前缀>-<SHA1(sessionID) 前 8 位>-<后 4 位>`，详见 `C:\Users\ZQY\.dsh\CODES.md`；新会话不继承旧码，除非用户明确说继承。
-- **只署自己写的**：第三方插件（`node_modules` 里装的、别人给的）一个字段都不动；判断插件是不是自己写的，看是否在 `C:\deepseek\插件\` 或 `C:\deepseek\work\` 有源码，而不是看它装在哪。
-- **为什么只对新插件**：已装插件的 `package.json` 改一次就要重装/重链一次（`file:` 安装是硬链接），为一行署名动运行中的包不值；而新插件写的时候顺手就带上了。
+- **线标识从哪来**：`$DSH_HOME\CODES.md` 记现行码与线归属（线内归属另见 `_AUTHORS.md`）；要追「谁写的」看 git 历史与码表。
+- **只署自己写的**：第三方插件（`node_modules` 里装的、别人给的）一个字段都不动；判断是不是自己写的，看有没有源码在 `C:\deepseek\插件\` 或 `C:\deepseek\work\`，不看它装在哪。
+- **为什么只对新插件**：已装插件的 `package.json` 改一次就要重装/重链一次（`file:` 安装是硬链接），为一行署名动运行中的包不值。

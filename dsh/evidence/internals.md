@@ -26,6 +26,11 @@
 
 ## 3. 会话历史
 
+**3.1 投影缓存路径的更正（2026-11-21 实测）** —— 原稿写的是旧社区版路径，本机实测：
+
+> 原稿：侧栏标题在投影缓存 `%APPDATA%\dsh-desktop\harness\storages\session_projcache\sessions\<sessionId>.json`。
+> 实测：`%APPDATA%\dsh-desktop\harness` 本机已不存在，现役路径是 `$DSH_HOME\storages\session_projcache\sessions\<sessionId>.json`。旧社区版才把数据硬编码在 `%APPDATA%\dsh-desktop\harness`，与本版 `DSH_HOME` 互不相认——换版本不继承，要手动搬。
+
 **3.3「一条回答显示两遍」的渲染层判定样本** —— 原文：
 
 > 实例：那次 reasoning 1,665 字 + text 550 字，没有第二份 text，判定为渲染层。
@@ -40,7 +45,7 @@
 
 ## 4. GUI 现场
 
-**三类 console 噪音的完整原文（含 9230 端口与命令）** —— 原文表行照录：
+**console 噪音的原文表行（当时记三类；references 现补到四类，第四行是 `inspector: globalThis.fetch is an accessor…`）** —— 原文照录：
 
 > | `WebSocket connection to 'ws://127.0.0.1:9230/ingest' failed`（红屏刷） | 内核 experimental-inspector worker 的时序噪音 | `Get-NetTCPConnection -LocalPort 9230 -State Listen` 有监听即已恢复，清空 console |
 > | `LaTeX-incompatible input … Unicode text character "（" used in math mode`（黄） | `$...$` 里混进中文标点（`（` `）` `，`）；KaTeX 只 warn 不炸 | 把中文标点留在公式外 |

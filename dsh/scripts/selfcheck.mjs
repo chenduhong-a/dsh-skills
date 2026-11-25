@@ -160,7 +160,7 @@ function profileDeps() {
   const missing = deps.filter(d => isPlugin(d.name) && !bundles.some(b => b === d.name || b.startsWith(d.name + '/'))).map(d => d.name);
   // 内核自带的 bundle（@deepseek-ai/*）不在 dependencies 里属正常，不算「多余」
   const extra = bundles.filter(b => !b.startsWith('@deepseek-ai/') && !deps.some(d => b === d.name || b.startsWith(d.name + '/')));
-  return { count: deps.length, bundles: bundles.length, missingInBundles: missing, extraInBundles: extra };
+  return { count: deps.length, bundles: bundles.length, notInBundles: missing, extraInBundles: extra };
 }
 
 // ── 03 三方插件 ──────────────────────────────────────────────────────
@@ -787,7 +787,7 @@ const L = [];
 const tag = MODE + (ONLY ? ` only=${[...ONLY].sort().join(',')}` : '');
 L.push(`=== DSH 自检 (${tag})  ${result.at}  ${(Date.now() - t0) / 1000}s ===`);
 if (result.kernel) L.push(`内核     cli=${result.kernel.cli}  exe=${result.kernel.exe}  electron=${result.kernel.electron}  一致=${result.kernel.match}`);
-if (result.deps) L.push(`依赖     ${result.deps.count} deps / ${result.deps.bundles} bundles  掉出=[${result.deps.missingInBundles}]  多余=[${result.deps.extraInBundles}]`);
+if (result.deps) L.push(`依赖     ${result.deps.count} deps / ${result.deps.bundles} bundles  掉出=[${result.deps.notInBundles}]  多余=[${result.deps.extraInBundles}]`);
 if (result.plugins) {
   L.push('插件：');
   for (const p of result.plugins) L.push(`  ${p.name.padEnd(46)} ${(p.version + '  ' + (p.update ?? '')).padEnd(18)} ${p.source.padEnd(9)} ${p.purpose}`);
