@@ -41,7 +41,7 @@ $sc   = "$env:USERPROFILE\.agents\skills\dsh\scripts\selfcheck.mjs"
 
 **工具面统计会漏「按需激活」的工具**：`dsh-univer-office` 的 14 个 `univer_*` 工具默认不进工具面（包内 `activationGate`，默认 `skills: true` + 12 个 office/univer 技能名；调过这些技能之一后才出现，省约 21 KB 常驻）。判断方法：宿主 `Tool.listTools` 有而模型面没有，且该插件源码里 `ctx.tools.register(tool, { when })` 带条件——那是设计，不是掉线。
 
-**取数细则**：工作区子目录的可见阈值＝全量子目录里 ≥20 MB 或 ≥200 文件；HOME 的空间大头先看 `storages` / `attachments`（每次 API 上传的 PDF 副本、删会话不回收），nvidia 库与 `mineru4-venv` 动不得（`mineru3-test` 旧 venv 自 2026-11-25 起不再被引用，可删）。体积数字以本轮 `--full` 实测为准，不凭印象。阈值与口径的历史变动依据见 `evidence/selfcheck.md` 第 1 节。
+**取数细则**：工作区子目录的可见阈值＝全量子目录里 ≥20 MB 或 ≥200 文件；HOME 的空间大头先看 `storages` / `attachments`（每次 API 上传的 PDF 副本、删会话不回收），nvidia 库与 `mineru4-venv` 动不得（`mineru3-test` 旧 venv 6.6 GB 已于 2026-11-25 连同 `~\.cache\modelscope` 的 1,180 MB 旧模型一并删除，别再去那找）。体积数字以本轮 `--full` 实测为准，不凭印象。阈值与口径的历史变动依据见 `evidence/selfcheck.md` 第 1 节。
 
 ## 2. 四个对话内哨兵（脚本证明不了，必须真调一次）
 
